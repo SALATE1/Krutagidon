@@ -6,8 +6,10 @@
   "description": "Headless deterministic simulation engine scaffold for Krutagidon 2.",
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "simulate:mass": "npm run build -- --pretty false && node dist/src/cli/run-mass-simulation.js",
+    "simulate:single": "npm run build -- --pretty false && node dist/src/cli/run-single-game.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "npm run build -- --pretty false && node dist/tests/rng.test.js"
+    "test": "npm run build -- --pretty false && node dist/tests/run-tests.js"
   },
   "devDependencies": {
     "@types/node": "^22.15.30",

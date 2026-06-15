@@ -1,7 +1,7 @@
 # Implement v0 turn/action loop
 
-Status: ready-for-agent
-Label: ready-for-agent
+Status: done
+Label: done
 Type: AFK
 
 ## Parent
@@ -16,16 +16,15 @@ The engine should expose legal actions, accept one selected legal action, apply 
 
 ## Acceptance criteria
 
-- [ ] The engine can list legal actions for the active player.
-- [ ] The engine rejects illegal actions without corrupting game state.
-- [ ] The engine can apply legal draw/play/buy/end-turn actions supported by the v0 data pack.
-- [ ] Bought or gained cards go to the correct discard zone according to current v0 rules.
-- [ ] End-of-turn cleanup moves unplayed hand cards and played non-permanents to discard.
-- [ ] Played permanents remain in the appropriate controlled zone.
-- [ ] Event logging captures important debug steps for a single game.
-- [ ] Tests cover the external action loop behavior using deterministic fixtures/data.
+- [x] The engine can list legal actions for the active player.
+- [x] The engine rejects illegal actions without corrupting game state.
+- [x] The engine can apply legal draw/play/buy/end-turn actions supported by the v0 data pack.
+- [x] Bought or gained cards go to the correct discard zone according to current v0 rules.
+- [x] End-of-turn cleanup moves unplayed hand cards and played non-permanents to discard.
+- [x] Played permanents remain in the appropriate controlled zone.
+- [x] Event logging captures important debug steps for a single game.
+- [x] Tests cover the external action loop behavior using deterministic fixtures/data.
 
 ## Blocked by
 
 - `.scratch/krutagidon-simulation-platform/issues/06-initialize-deterministic-game-state-from-mapped-data.md`
-
