@@ -210,6 +210,33 @@ test("executable data-pack validation rejects unsupported play-top destinations"
   );
 });
 
+test("executable data-pack validation rejects redirect defense branches", () => {
+  const card = createFixtureCard("fixture-unsupported-redirect-defense");
+  const dataPack = withFixtureCard({
+    ...card,
+    engine: {
+      ...card.engine,
+      playableInV0: true,
+      effects: [
+        {
+          effectId: "fixture_avoid_attack",
+          timing: "onDefense",
+          destination: "redirectTarget",
+        },
+      ],
+    },
+  });
+
+  const result = validateExecutableDataPack(dataPack);
+
+  assert.equal(result.ok, false);
+  assert.ok(
+    result.errors.some((error) => {
+      return error.includes("fixture-unsupported-redirect-defense") && error.includes("redirectTarget");
+    }),
+  );
+});
+
 function withFixtureCard(card: CardDefinition): LoadedDataPack {
   const dataPack = loadV0DataPack(rootDir);
   return {

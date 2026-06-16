@@ -776,6 +776,194 @@ test("fixture single-target attack can be avoided by a topdeck-self defense card
   );
 });
 
+test("fixture defense with an unpayable discard-other-card cost is not legal", () => {
+  const state = initializeGame({ rootDir, seed: 60615 });
+  const activePlayer = state.players.find((player) => player.playerId === state.activePlayerId);
+  assert.ok(activePlayer);
+  const targetPlayer = state.players.find((player) => player.playerId !== activePlayer.playerId);
+  assert.ok(targetPlayer);
+  targetPlayer.hand.splice(0);
+  addFixtureDefenseCardToHand(state, targetPlayer, "discardSelf", {
+    costs: [{ costId: "discard_other_hand_card" }],
+  });
+  const fixtureCardId = addFixtureCardToActiveHand(state, {
+    effectId: "fixture_single_target_attack",
+    timing: "onPlay",
+    amount: 4,
+    target: {
+      selector: "opponentPlayer",
+    },
+  });
+
+  const result = applyAction(state, {
+    type: "playCard",
+    cardInstanceId: fixtureCardId,
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(targetPlayer.life.current, 16);
+  assert.equal(state.eventLog.some((event) => event.type === "defenseChoiceSelected"), false);
+});
+
+test("fixture defense pays discard, chip, and nonlethal life costs before avoiding an attack", () => {
+  const state = initializeGame({ rootDir, seed: 60615 });
+  const activePlayer = state.players.find((player) => player.playerId === state.activePlayerId);
+  assert.ok(activePlayer);
+  const targetPlayer = state.players.find((player) => player.playerId !== activePlayer.playerId);
+  assert.ok(targetPlayer);
+  targetPlayer.chips = 3;
+  targetPlayer.life.current = 5;
+  const paidDiscard = targetPlayer.hand[0];
+  assert.ok(paidDiscard);
+  const defenseCard = addFixtureDefenseCardToHand(state, targetPlayer, "discardSelf", {
+    costs: [{ costId: "discard_other_hand_card" }, { costId: "spend_chips", amount: 2 }, { costId: "pay_life", amount: 4 }],
+  });
+  const fixtureCardId = addFixtureCardToActiveHand(state, {
+    effectId: "fixture_single_target_attack",
+    timing: "onPlay",
+    amount: 4,
+    target: {
+      selector: "opponentPlayer",
+    },
+  });
+
+  const result = applyAction(state, {
+    type: "playCard",
+    cardInstanceId: fixtureCardId,
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(targetPlayer.life.current, 1);
+  assert.equal(targetPlayer.chips, 1);
+  assert.equal(targetPlayer.hand.includes(paidDiscard), false);
+  assert.equal(targetPlayer.discard.includes(paidDiscard), true);
+  assert.equal(targetPlayer.discard.includes(defenseCard), true);
+  assert.ok(
+    state.eventLog.some((event) => {
+      return (
+        event.type === "defenseCostPaid" &&
+        event.playerId === targetPlayer.playerId &&
+        event.cardInstanceId === defenseCard.instanceId &&
+        event.targetCardInstanceId === paidDiscard.instanceId &&
+        event.effectId === "discard_other_hand_card"
+      );
+    }),
+  );
+  assert.ok(
+    state.eventLog.some((event) => {
+      return (
+        event.type === "defenseCostPaid" &&
+        event.playerId === targetPlayer.playerId &&
+        event.cardInstanceId === defenseCard.instanceId &&
+        event.effectId === "spend_chips" &&
+        event.amount === 2
+      );
+    }),
+  );
+  assert.ok(
+    state.eventLog.some((event) => {
+      return (
+        event.type === "defenseCostPaid" &&
+        event.playerId === targetPlayer.playerId &&
+        event.cardInstanceId === defenseCard.instanceId &&
+        event.effectId === "pay_life" &&
+        event.amount === 4
+      );
+    }),
+  );
+  assert.ok(state.eventLog.some((event) => event.type === "fixtureAttackAvoided"));
+});
+
+test("fixture defense with a lethal life cost is skipped for the next legal defense option", () => {
+  const state = initializeGame({ rootDir, seed: 60615 });
+  const activePlayer = state.players.find((player) => player.playerId === state.activePlayerId);
+  assert.ok(activePlayer);
+  const targetPlayer = state.players.find((player) => player.playerId !== activePlayer.playerId);
+  assert.ok(targetPlayer);
+  targetPlayer.life.current = 5;
+  addFixtureDefenseCardToHand(state, targetPlayer, "discardSelf", {
+    costs: [{ costId: "pay_life", amount: 5 }],
+  });
+  const legalDefense = addFixtureDefenseCardToHand(state, targetPlayer, "discardSelf");
+  const fixtureCardId = addFixtureCardToActiveHand(state, {
+    effectId: "fixture_single_target_attack",
+    timing: "onPlay",
+    amount: 4,
+    target: {
+      selector: "opponentPlayer",
+    },
+  });
+
+  const result = applyAction(state, {
+    type: "playCard",
+    cardInstanceId: fixtureCardId,
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(targetPlayer.life.current, 5);
+  assert.equal(targetPlayer.discard.includes(legalDefense), true);
+  assert.ok(
+    state.eventLog.some((event) => {
+      return event.type === "defenseChoiceSelected" && event.cardInstanceId === legalDefense.instanceId;
+    }),
+  );
+  assert.equal(
+    state.eventLog.some((event) => event.type === "defenseCostPaid" && event.effectId === "pay_life"),
+    false,
+  );
+});
+
+test("fixture defense runs supported branch effects through the shared effect runtime after costs are paid", () => {
+  const state = initializeGame({ rootDir, seed: 60615 });
+  const activePlayer = state.players.find((player) => player.playerId === state.activePlayerId);
+  assert.ok(activePlayer);
+  const targetPlayer = state.players.find((player) => player.playerId !== activePlayer.playerId);
+  assert.ok(targetPlayer);
+  targetPlayer.chips = 1;
+  const defenseCard = addFixtureDefenseCardToHand(state, targetPlayer, "discardSelf", {
+    costs: [{ costId: "spend_chips", amount: 1 }],
+    branchEffects: [
+      {
+        effectId: "add_power",
+        timing: "onDefense",
+        amount: 2,
+      },
+    ],
+  });
+  const fixtureCardId = addFixtureCardToActiveHand(state, {
+    effectId: "fixture_single_target_attack",
+    timing: "onPlay",
+    amount: 4,
+    target: {
+      selector: "opponentPlayer",
+    },
+  });
+
+  const result = applyAction(state, {
+    type: "playCard",
+    cardInstanceId: fixtureCardId,
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(targetPlayer.chips, 0);
+  assert.equal(state.turn.power, 2);
+  const costEventIndex = state.eventLog.findIndex((event) => {
+    return event.type === "defenseCostPaid" && event.cardInstanceId === defenseCard.instanceId;
+  });
+  const branchEventIndex = state.eventLog.findIndex((event) => {
+    return (
+      event.type === "effectAddPowerApplied" &&
+      event.playerId === targetPlayer.playerId &&
+      event.cardInstanceId === defenseCard.instanceId &&
+      event.definitionId === defenseCard.definitionId &&
+      event.effectId === "add_power" &&
+      event.amount === 2
+    );
+  });
+  assert.ok(costEventIndex >= 0);
+  assert.ok(branchEventIndex > costEventIndex);
+});
+
 test("targeted fixture effect skips when there are no legal choices by default", () => {
   const state = initializeGame({ rootDir, seed: 60615 });
   state.common.market.splice(0);
@@ -933,10 +1121,14 @@ function addFixtureDefenseCardToHand(
   state: GameState,
   player: PlayerState,
   destination: "discardSelf" | "topdeckSelf",
+  options: {
+    costs?: unknown[];
+    branchEffects?: unknown[];
+  } = {},
 ): CardInstance {
   const definition: CardDefinition = {
     schemaVersion: 1,
-    cardId: `fixture-defense-${destination}`,
+    cardId: `fixture-defense-${destination}-${player.hand.length + 1}`,
     visible: {
       nameRu: `Fixture defense ${destination}`,
       cost: 0,
@@ -961,6 +1153,8 @@ function addFixtureDefenseCardToHand(
           effectId: "fixture_avoid_attack",
           timing: "onDefense",
           destination,
+          costs: options.costs,
+          branchEffects: options.branchEffects,
         },
       ],
       unsupportedMechanics: [],

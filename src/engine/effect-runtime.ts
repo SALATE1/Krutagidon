@@ -16,8 +16,18 @@ export function executeOnPlayEffects(
   definition: CardDefinition,
   source: EffectSourceContext,
 ): EffectExecutionResult {
-  for (const effect of definition.engine.effects) {
-    if (!isEffectRecord(effect) || effect["timing"] !== "onPlay") {
+  return executeEffects(state, player, definition.engine.effects, "onPlay", source);
+}
+
+function executeEffects(
+  state: GameState,
+  player: PlayerState,
+  effects: readonly unknown[],
+  timing: string,
+  source: EffectSourceContext,
+): EffectExecutionResult {
+  for (const effect of effects) {
+    if (!isEffectRecord(effect) || effect["timing"] !== timing) {
       continue;
     }
 
@@ -681,6 +691,29 @@ function resolveDefenseWindow(state: GameState, defendingPlayer: PlayerState): b
     effectId: "fixture_avoid_attack",
   });
 
+  if (!payDefenseCosts(state, defendingPlayer, defense.card, defense.effect)) {
+    return false;
+  }
+
+  const branchEffects = defense.effect["branchEffects"];
+  if (Array.isArray(branchEffects)) {
+    const branchResult = executeEffects(
+      state,
+      defendingPlayer,
+      branchEffects,
+      "onDefense",
+      {
+        sourceType: "card",
+        playerId: defendingPlayer.playerId,
+        cardInstanceId: defense.card.instanceId,
+        definitionId: defense.card.definitionId,
+      },
+    );
+    if (!branchResult.ok) {
+      return false;
+    }
+  }
+
   const cardIndex = defendingPlayer.hand.findIndex((card) => card.instanceId === defense.card.instanceId);
   if (cardIndex < 0) {
     return false;
@@ -721,7 +754,7 @@ function resolveDefenseWindow(state: GameState, defendingPlayer: PlayerState): b
 function findFirstLegalDefense(
   state: GameState,
   defendingPlayer: PlayerState,
-): { card: CardInstance; destination: "discardSelf" | "topdeckSelf" } | undefined {
+): { card: CardInstance; destination: "discardSelf" | "topdeckSelf"; effect: Record<string, unknown> } | undefined {
   for (const card of defendingPlayer.hand) {
     const definition = state.cardDefinitions.get(card.definitionId);
     if (definition === undefined) {
@@ -736,7 +769,7 @@ function findFirstLegalDefense(
         (effect["destination"] === "discardSelf" || effect["destination"] === "topdeckSelf")
       );
     });
-    if (defenseEffect !== undefined) {
+    if (defenseEffect !== undefined && canPayDefenseCosts(defendingPlayer, card, defenseEffect)) {
       const destination = defenseEffect["destination"];
       if (destination !== "discardSelf" && destination !== "topdeckSelf") {
         continue;
@@ -745,11 +778,156 @@ function findFirstLegalDefense(
       return {
         card,
         destination,
+        effect: defenseEffect,
       };
     }
   }
 
   return undefined;
+}
+
+function canPayDefenseCosts(
+  defendingPlayer: PlayerState,
+  defenseCard: CardInstance,
+  defenseEffect: Record<string, unknown>,
+): boolean {
+  const costs = defenseEffect["costs"];
+  if (costs === undefined) {
+    return true;
+  }
+
+  if (!Array.isArray(costs)) {
+    return false;
+  }
+
+  for (const cost of costs) {
+    if (!isEffectRecord(cost)) {
+      return false;
+    }
+
+    if (cost["costId"] === "discard_other_hand_card") {
+      if (defendingPlayer.hand.every((card) => card.instanceId === defenseCard.instanceId)) {
+        return false;
+      }
+      continue;
+    }
+
+    if (cost["costId"] === "spend_chips") {
+      const amount = cost["amount"];
+      if (typeof amount !== "number" || !Number.isSafeInteger(amount) || amount <= 0 || defendingPlayer.chips < amount) {
+        return false;
+      }
+      continue;
+    }
+
+    if (cost["costId"] === "pay_life") {
+      const amount = cost["amount"];
+      if (
+        typeof amount !== "number" ||
+        !Number.isSafeInteger(amount) ||
+        amount <= 0 ||
+        defendingPlayer.life.current - amount < 1
+      ) {
+        return false;
+      }
+      continue;
+    }
+
+    return false;
+  }
+
+  return true;
+}
+
+function payDefenseCosts(
+  state: GameState,
+  defendingPlayer: PlayerState,
+  defenseCard: CardInstance,
+  defenseEffect: Record<string, unknown>,
+): boolean {
+  const costs = defenseEffect["costs"];
+  if (costs === undefined) {
+    return true;
+  }
+
+  if (!Array.isArray(costs)) {
+    return false;
+  }
+
+  for (const cost of costs) {
+    if (!isEffectRecord(cost)) {
+      return false;
+    }
+
+    if (cost["costId"] === "discard_other_hand_card") {
+      const paidCardIndex = defendingPlayer.hand.findIndex((card) => card.instanceId !== defenseCard.instanceId);
+      if (paidCardIndex < 0) {
+        return false;
+      }
+
+      const [paidCard] = defendingPlayer.hand.splice(paidCardIndex, 1);
+      if (paidCard === undefined) {
+        return false;
+      }
+
+      defendingPlayer.discard.push(paidCard);
+      state.eventLog.push({
+        type: "defenseCostPaid",
+        playerId: defendingPlayer.playerId,
+        cardInstanceId: defenseCard.instanceId,
+        definitionId: defenseCard.definitionId,
+        targetCardInstanceId: paidCard.instanceId,
+        targetDefinitionId: paidCard.definitionId,
+        effectId: "discard_other_hand_card",
+      });
+      continue;
+    }
+
+    if (cost["costId"] === "spend_chips") {
+      const amount = cost["amount"];
+      if (typeof amount !== "number" || !Number.isSafeInteger(amount) || amount <= 0 || defendingPlayer.chips < amount) {
+        return false;
+      }
+
+      defendingPlayer.chips -= amount;
+      state.eventLog.push({
+        type: "defenseCostPaid",
+        playerId: defendingPlayer.playerId,
+        cardInstanceId: defenseCard.instanceId,
+        definitionId: defenseCard.definitionId,
+        effectId: "spend_chips",
+        amount,
+      });
+      continue;
+    }
+
+    if (cost["costId"] === "pay_life") {
+      const amount = cost["amount"];
+      if (
+        typeof amount !== "number" ||
+        !Number.isSafeInteger(amount) ||
+        amount <= 0 ||
+        defendingPlayer.life.current - amount < 1
+      ) {
+        return false;
+      }
+
+      defendingPlayer.life.current -= amount;
+      state.eventLog.push({
+        type: "defenseCostPaid",
+        playerId: defendingPlayer.playerId,
+        cardInstanceId: defenseCard.instanceId,
+        definitionId: defenseCard.definitionId,
+        effectId: "pay_life",
+        amount,
+      });
+      continue;
+    }
+
+    return false;
+  }
+
+  return true;
 }
 
 function healPlayer(
