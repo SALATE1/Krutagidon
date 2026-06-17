@@ -94,6 +94,10 @@ export function calculateEffectiveTokenVictoryPoints(
   playerId: PlayerId,
   definition: TokenDefinition,
 ): number {
+  if (definition.kind !== "deadWizardToken") {
+    throw new Error(`Token ${definition.tokenId} does not have victory points`);
+  }
+
   return calculateEffectiveValue({
     state,
     playerId,
@@ -149,7 +153,9 @@ export function calculateEffectiveValue(options: {
 function getControlledObjectEffects(view: ControlledObjectView): unknown[] {
   return [
     ...view.cards.flatMap((object) => object.definition.engine.effects),
-    ...view.tokens.flatMap((object) => object.definition.effects),
+    ...view.tokens.flatMap((object) => {
+      return object.definition.kind === "deadWizardToken" ? object.definition.effects : (object.definition.engine?.effects ?? []);
+    }),
     ...view.statuses.flatMap((status) => status.effects),
     ...view.trophyLikeObjects.flatMap((trophy) => trophy.effects),
   ];

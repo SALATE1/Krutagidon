@@ -1,7 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { loadV0DataPack, validateExecutableDataPack, type CardDefinition, type LoadedDataPack } from "../src/index.js";
+import {
+  loadV0DataPack,
+  validateExecutableDataPack,
+  type CardDefinition,
+  type LoadedDataPack,
+  type TokenDefinition,
+} from "../src/index.js";
 
 const rootDir = process.cwd();
 
@@ -335,6 +341,55 @@ test("executable data-pack validation rejects unsupported mechanics", () => {
   );
 });
 
+test("executable data-pack validation rejects wizard property tokens with unsupported mechanics", () => {
+  const dataPack = withFixtureToken({
+    schemaVersion: 1,
+    tokenId: "wizard-property-fixture-unsupported",
+    runtimeSchema: "krutagidon.tokenDefinition.v0",
+    kind: "wizardProperty",
+    visible: {
+      textRu: "Получив волшебника, получи 1 чипсину.",
+    },
+    engine: {
+      mappingStatus: "draft",
+      playableInV0: true,
+      effects: [],
+      unsupportedMechanics: ["wizard-property-triggered-economy"],
+    },
+  });
+
+  const result = validateExecutableDataPack(dataPack);
+
+  assert.equal(result.ok, false);
+  assert.ok(
+    result.errors.some((error) => {
+      return error.includes("wizard-property-fixture-unsupported") && error.includes("wizard-property-triggered-economy");
+    }),
+  );
+});
+
+test("draft wizard property tokens are not treated as executable", () => {
+  const dataPack = withFixtureToken({
+    schemaVersion: 1,
+    tokenId: "wizard-property-fixture-draft",
+    runtimeSchema: "krutagidon.tokenDefinition.v0",
+    kind: "wizardProperty",
+    visible: {
+      textRu: "Получив волшебника, получи 1 чипсину.",
+    },
+    engine: {
+      mappingStatus: "draft",
+      playableInV0: false,
+      effects: [],
+      unsupportedMechanics: ["wizard-property-triggered-economy"],
+    },
+  });
+
+  const result = validateExecutableDataPack(dataPack);
+
+  assert.deepEqual(result, { ok: true });
+});
+
 test("executable data-pack validation rejects unsupported play-top destinations", () => {
   const card = createFixtureCard("fixture-unsupported-play-top-destination");
   const dataPack = withFixtureCard({
@@ -403,6 +458,15 @@ function withOnlyFixtureCard(card: CardDefinition): LoadedDataPack {
   return {
     ...dataPack,
     cardDefinitions: new Map([[card.cardId, card]]),
+  };
+}
+
+function withFixtureToken(token: TokenDefinition): LoadedDataPack {
+  const dataPack = loadV0DataPack(rootDir);
+  return {
+    ...dataPack,
+    cardDefinitions: new Map(),
+    tokenDefinitions: new Map([[token.tokenId, token]]),
   };
 }
 

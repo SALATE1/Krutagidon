@@ -95,7 +95,9 @@ test("scoring applies DWT victory points from token definitions", () => {
   const score = scoreGame(state).find((candidate) => candidate.playerId === player.playerId);
 
   assert.ok(score);
-  assert.equal(state.tokenDefinitions.get("fixture-dead-wizard-token")?.victoryPoints, -5);
+  const fixtureDeadWizardToken = state.tokenDefinitions.get("fixture-dead-wizard-token");
+  assert.equal(fixtureDeadWizardToken?.kind, "deadWizardToken");
+  assert.equal(fixtureDeadWizardToken.victoryPoints, -5);
   assert.equal(score.victoryPoints, expectedCardScore - 5);
 });
 

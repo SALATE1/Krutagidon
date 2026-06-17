@@ -906,7 +906,9 @@ test("deal_damage can kill an opponent, give a neutral DWT, resurrect, and affec
   const expectedCardScore = [...targetPlayer.hand, ...targetPlayer.deck, ...targetPlayer.discard].reduce((total, card) => {
     return total + state.cardDefinitions.get(card.definitionId)!.engine.victoryPoints;
   }, 0);
-  const expectedTokenScore = state.tokenDefinitions.get(neutralDwt.definitionId)!.victoryPoints;
+  const neutralDwtDefinition = state.tokenDefinitions.get(neutralDwt.definitionId);
+  assert.equal(neutralDwtDefinition?.kind, "deadWizardToken");
+  const expectedTokenScore = neutralDwtDefinition.victoryPoints;
   assert.ok(targetScore);
   assert.equal(targetScore.deadWizardTokenCount, 1);
   assert.equal(targetScore.victoryPoints, expectedCardScore + expectedTokenScore);

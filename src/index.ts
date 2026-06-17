@@ -4,11 +4,13 @@ export type {
   CardDefinition,
   DataPackValidationOptions,
   DataPackValidationResult,
+  DeadWizardTokenDefinition,
   DeckComposition,
   LoadedDataPack,
   TokenDefinition,
   TokenKind,
   TokenStackComposition,
+  WizardPropertyDefinition,
 } from "./engine/data.js";
 export { loadV0DataPack, validateExecutableDataPack } from "./engine/data.js";
 export type {

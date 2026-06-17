@@ -51,16 +51,38 @@ export interface DeckEntry {
   count: number;
 }
 
-export type TokenKind = "deadWizardToken";
+export type TokenKind = "deadWizardToken" | "wizardProperty";
 
-export interface TokenDefinition {
+interface BaseTokenDefinition {
   schemaVersion: number;
   tokenId: string;
   runtimeSchema: "krutagidon.tokenDefinition.v0";
   kind: TokenKind;
+}
+
+export interface DeadWizardTokenDefinition extends BaseTokenDefinition {
+  kind: "deadWizardToken";
   victoryPoints: number;
   effects: unknown[];
 }
+
+export interface WizardPropertyDefinition extends BaseTokenDefinition {
+  kind: "wizardProperty";
+  visible?: {
+    textRu: string;
+    sourceLabel?: string;
+    sourceImage?: string;
+  };
+  clarifications?: string[];
+  engine?: {
+    mappingStatus: string;
+    playableInV0: boolean;
+    effects: unknown[];
+    unsupportedMechanics: string[];
+  };
+}
+
+export type TokenDefinition = DeadWizardTokenDefinition | WizardPropertyDefinition;
 
 export interface TokenStackComposition {
   schemaVersion: number;
@@ -193,6 +215,40 @@ export function validateExecutableDataPack(
       }
 
       errors.push(...validateSupportedEffectShape(definition.cardId, effectId, effect));
+    }
+  }
+
+  for (const definition of dataPack.tokenDefinitions.values()) {
+    if (definition.kind !== "wizardProperty" || definition.engine === undefined || !definition.engine.playableInV0) {
+      continue;
+    }
+
+    if (definition.engine.unsupportedMechanics.length > 0) {
+      errors.push(
+        `Token ${definition.tokenId} has unsupported mechanics ${definition.engine.unsupportedMechanics.join(", ")}`,
+      );
+    }
+
+    for (const effect of definition.engine.effects) {
+      if (!isEffectRecord(effect)) {
+        continue;
+      }
+
+      const effectId = effect["effectId"];
+      if (typeof effectId !== "string") {
+        errors.push(`Token ${definition.tokenId} uses unsupported effect id ${String(effectId)}`);
+        continue;
+      }
+
+      if (mode === "combat" && effectId.startsWith("fixture_")) {
+        errors.push(`Token ${definition.tokenId} uses fixture effect id ${effectId} in combat data`);
+        continue;
+      }
+
+      if (!isSupportedExecutableEffectId(effectId, mode)) {
+        errors.push(`Token ${definition.tokenId} uses unsupported effect id ${effectId}`);
+        continue;
+      }
     }
   }
 

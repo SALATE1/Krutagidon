@@ -103,7 +103,7 @@ test("a controlled fixture object can modify token scoring without mutating toke
   token.ownerId = player.playerId;
   player.deadWizardTokens.push(token);
   const definition = state.tokenDefinitions.get(token.definitionId);
-  assert.ok(definition);
+  assert.equal(definition?.kind, "deadWizardToken");
   const baseVictoryPoints = definition.victoryPoints;
   player.trophyLikeObjects.push(createTokenVictoryPointModifierTrophy(player.playerId, token.definitionId, 1));
 
