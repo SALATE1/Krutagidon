@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "stackId": "v0-wizard-property-draft-stack",
+  "runtimeSchema": "krutagidon.tokenStack.v0",
+  "role": "wizardProperties",
+  "mappingStatus": "draft-v0",
+  "entries": [
+    {
+      "tokenId": "wizard-property-001",
+      "count": 1
+    },
+    {
+      "tokenId": "wizard-property-002",
+      "count": 1
+    },
+    {
+      "tokenId": "wizard-property-003",
+      "count": 1
+    },
+    {
+      "tokenId": "wizard-property-004",
+      "count": 1
+    },
+    {
+      "tokenId": "wizard-property-005",
+      "count": 1
+    },
+    {
+      "tokenId": "wizard-property-006",
+      "count": 1
+    },
+    {
+      "tokenId": "wizard-property-007",
+      "count": 1
+    },
+    {
+      "tokenId": "wizard-property-008",
+      "count": 1
+    },
+    {
+      "tokenId": "wizard-property-009",
+      "count": 1
+    },
+    {
+      "tokenId": "wizard-property-010",
+      "count": 1
+    }
+  ]
+}

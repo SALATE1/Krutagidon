@@ -1,6 +1,6 @@
 # Add wizard property setup lifecycle
 
-Status: ready-for-agent
+Status: done
 Label: ready-for-agent
 Type: AFK
 
@@ -14,11 +14,11 @@ Type: AFK
 
 ## Acceptance criteria
 
-- [ ] Data pack может ссылаться на набор wizard properties из 10 draft definitions.
-- [ ] Setup может детерминированно назначить свойство игроку через текущий first-legal/fallback подход.
-- [ ] Назначенное свойство доступно как controlled object для модификаторов и triggers.
-- [ ] Неисполняемые эффекты свойства не выполняются молча.
-- [ ] Есть focused tests на загрузку, назначение и controlled-object видимость свойства.
+- [x] Data pack может ссылаться на набор wizard properties из 10 draft definitions.
+- [x] Setup может детерминированно назначить свойство игроку через текущий first-legal/fallback подход.
+- [x] Назначенное свойство доступно как controlled object для модификаторов и triggers.
+- [x] Неисполняемые эффекты свойства не выполняются молча.
+- [x] Есть focused tests на загрузку, назначение и controlled-object видимость свойства.
 
 ## Blocked by
 

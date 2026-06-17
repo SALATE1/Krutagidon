@@ -20,6 +20,7 @@ export interface ControlledObjectView {
   playerId: PlayerId;
   cards: readonly ControlledCardObject[];
   tokens: readonly ControlledTokenObject[];
+  wizardProperties: readonly ControlledTokenObject[];
   statuses: readonly StatusInstance[];
   trophyLikeObjects: readonly TrophyLikeInstance[];
 }
@@ -50,6 +51,11 @@ export function buildControlledObjectView(state: GameState, playerId: PlayerId):
       definition: mustGetCardDefinition(state, card.definitionId),
     })),
     tokens: player.deadWizardTokens.map((token) => ({
+      sourceType: "controlledToken" as const,
+      token,
+      definition: mustGetTokenDefinition(state, token.definitionId),
+    })),
+    wizardProperties: player.wizardProperties.map((token) => ({
       sourceType: "controlledToken" as const,
       token,
       definition: mustGetTokenDefinition(state, token.definitionId),
@@ -156,9 +162,22 @@ function getControlledObjectEffects(view: ControlledObjectView): unknown[] {
     ...view.tokens.flatMap((object) => {
       return object.definition.kind === "deadWizardToken" ? object.definition.effects : (object.definition.engine?.effects ?? []);
     }),
+    ...view.wizardProperties.flatMap((object) => getWizardPropertyEffects(object.definition)),
     ...view.statuses.flatMap((status) => status.effects),
     ...view.trophyLikeObjects.flatMap((trophy) => trophy.effects),
   ];
+}
+
+function getWizardPropertyEffects(definition: TokenDefinition): unknown[] {
+  if (definition.kind !== "wizardProperty" || definition.engine === undefined) {
+    return [];
+  }
+
+  if (!definition.engine.playableInV0 && definition.engine.effects.length > 0) {
+    throw new Error(`Cannot execute non-playable wizard property ${definition.tokenId}`);
+  }
+
+  return definition.engine.effects;
 }
 
 function isModifierEffect(

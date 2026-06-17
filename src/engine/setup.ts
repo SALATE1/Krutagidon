@@ -46,6 +46,7 @@ export interface PlayerState {
   playedThisTurn: CardInstance[];
   permanents: CardInstance[];
   deadWizardTokens: TokenInstance[];
+  wizardProperties: TokenInstance[];
   statuses: StatusInstance[];
   trophyLikeObjects: TrophyLikeInstance[];
   chips: number;
@@ -136,6 +137,7 @@ export function initializeGame(options: InitializeGameOptions): GameState {
   const tokenFactory = createTokenInstanceFactory();
 
   const players = createPlayers(playerCount, dataPack, factory, rng);
+  assignStartingWizardProperties(players, dataPack, tokenFactory);
   const mainDeck = instantiateDeck(dataPack.decks.mainDeck, dataPack, factory, "common");
   const legendDeck = instantiateDeck(dataPack.decks.legendDeck, dataPack, factory, "common");
   shuffleInPlace(mainDeck, rng);
@@ -214,6 +216,36 @@ function instantiateDeadWizardTokens(
   };
 }
 
+function assignStartingWizardProperties(
+  players: PlayerState[],
+  dataPack: LoadedDataPack,
+  factory: TokenInstanceFactory,
+): void {
+  const tokenStack = dataPack.tokenStacks.wizardProperties;
+  if (tokenStack === undefined) {
+    return;
+  }
+
+  const setupPool = instantiateTokenStack(tokenStack, dataPack, factory, "common");
+  if (setupPool.length === 0) {
+    throw new Error(`Token stack ${tokenStack.stackId} must include at least one wizard property`);
+  }
+
+  for (let index = 0; index < players.length; index += 1) {
+    const player = players[index];
+    const token = setupPool[index % setupPool.length];
+    if (player === undefined || token === undefined) {
+      throw new Error("Unexpected sparse array during wizard property setup");
+    }
+
+    player.wizardProperties.push({
+      ...token,
+      instanceId: `starting-${token.instanceId}-player-${index + 1}`,
+      ownerId: player.playerId,
+    });
+  }
+}
+
 function createPlayers(
   playerCount: number,
   dataPack: LoadedDataPack,
@@ -233,6 +265,7 @@ function createPlayers(
       playedThisTurn: [],
       permanents: [],
       deadWizardTokens: [],
+      wizardProperties: [],
       statuses: [],
       trophyLikeObjects: [],
       chips: 0,

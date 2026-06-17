@@ -5,6 +5,9 @@
   "mappingStatus": "supported-first-batch-v0",
   "cardsPath": "data/cards",
   "tokensPath": "data/tokens",
+  "tokenDefinitionPaths": [
+    "data/import/wizard-property-drafts"
+  ],
   "decks": {
     "starterDeck": "data/decks/v0-starter-deck.json",
     "mainDeck": "data/decks/v0-main-deck-first-batch.json",
@@ -13,7 +16,8 @@
     "limpWandStack": "data/decks/v0-limp-wand-stack.json"
   },
   "tokenStacks": {
-    "deadWizardTokens": "data/decks/v0-dead-wizard-token-stack.json"
+    "deadWizardTokens": "data/decks/v0-dead-wizard-token-stack.json",
+    "wizardProperties": "data/decks/v0-wizard-property-draft-stack.json"
   },
   "counts": {
     "mapped": 39,

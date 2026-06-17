@@ -104,6 +104,7 @@ export interface DataPackManifest {
   runtimeSchema: "krutagidon.dataPack.v0";
   cardsPath: string;
   tokensPath?: string;
+  tokenDefinitionPaths?: string[];
   decks: {
     starterDeck: string;
     mainDeck: string;
@@ -113,6 +114,7 @@ export interface DataPackManifest {
   };
   tokenStacks?: {
     deadWizardTokens: string;
+    wizardProperties?: string;
   };
   needsData: unknown[];
 }
@@ -130,6 +132,7 @@ export interface LoadedDataPack {
   };
   tokenStacks: {
     deadWizardTokens: TokenStackComposition | undefined;
+    wizardProperties: TokenStackComposition | undefined;
   };
 }
 
@@ -152,8 +155,11 @@ export function loadV0DataPack(
 ): LoadedDataPack {
   const manifest = readJsonFile<DataPackManifest>(rootDir, manifestPath);
   const cardDefinitions = loadCardDefinitions(rootDir, manifest.cardsPath);
-  const tokenDefinitions =
-    manifest.tokensPath === undefined ? new Map<string, TokenDefinition>() : loadTokenDefinitions(rootDir, manifest.tokensPath);
+  const tokenDefinitionPaths = [
+    ...(manifest.tokensPath === undefined ? [] : [manifest.tokensPath]),
+    ...(manifest.tokenDefinitionPaths ?? []),
+  ];
+  const tokenDefinitions = loadTokenDefinitions(rootDir, tokenDefinitionPaths);
 
   return {
     manifest,
@@ -171,6 +177,10 @@ export function loadV0DataPack(
         manifest.tokenStacks?.deadWizardTokens === undefined
           ? undefined
           : readJsonFile<TokenStackComposition>(rootDir, manifest.tokenStacks.deadWizardTokens),
+      wizardProperties:
+        manifest.tokenStacks?.wizardProperties === undefined
+          ? undefined
+          : readJsonFile<TokenStackComposition>(rootDir, manifest.tokenStacks.wizardProperties),
     },
   };
 }
@@ -278,17 +288,20 @@ function loadCardDefinitions(rootDir: string, cardsPath: string): ReadonlyMap<st
   return cards;
 }
 
-function loadTokenDefinitions(rootDir: string, tokensPath: string): ReadonlyMap<string, TokenDefinition> {
-  const absoluteTokensPath = path.resolve(rootDir, tokensPath);
+function loadTokenDefinitions(rootDir: string, tokenDefinitionPaths: string[]): ReadonlyMap<string, TokenDefinition> {
   const tokens = new Map<string, TokenDefinition>();
 
-  for (const fileName of readdirSync(absoluteTokensPath).sort()) {
-    if (!fileName.endsWith(".json") || fileName.startsWith("_")) {
-      continue;
-    }
+  for (const tokensPath of tokenDefinitionPaths) {
+    const absoluteTokensPath = path.resolve(rootDir, tokensPath);
 
-    const token = readJsonFile<TokenDefinition>(absoluteTokensPath, fileName);
-    tokens.set(token.tokenId, token);
+    for (const fileName of readdirSync(absoluteTokensPath).sort()) {
+      if (!fileName.endsWith(".json") || fileName.startsWith("_")) {
+        continue;
+      }
+
+      const token = readJsonFile<TokenDefinition>(absoluteTokensPath, fileName);
+      tokens.set(token.tokenId, token);
+    }
   }
 
   return tokens;

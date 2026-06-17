@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { initializeGame, type CardInstance, type GameState } from "../src/index.js";
+import { initializeGame, loadV0DataPack, type CardInstance, type GameState } from "../src/index.js";
 
 const rootDir = process.cwd();
 
@@ -32,6 +32,26 @@ test("initial game setup creates expected player and common zones", () => {
     assert.equal(player.discard.length, 0);
     assert.equal(player.playedThisTurn.length, 0);
     assert.equal(player.permanents.length, 0);
+    assert.equal(player.wizardProperties.length, 1);
+    const wizardProperty = player.wizardProperties[0];
+    assert.ok(wizardProperty);
+    assert.equal(wizardProperty.ownerId, player.playerId);
+    assert.equal(state.tokenDefinitions.get(wizardProperty.definitionId)?.kind, "wizardProperty");
+  }
+});
+
+test("v0 data pack loads the wizard property draft setup pool", () => {
+  const dataPack = loadV0DataPack(rootDir);
+  const wizardPropertyStack = dataPack.tokenStacks.wizardProperties;
+
+  assert.ok(wizardPropertyStack);
+  assert.equal(wizardPropertyStack.entries.length, 10);
+
+  for (const entry of wizardPropertyStack.entries) {
+    assert.equal(entry.count, 1);
+    const definition = dataPack.tokenDefinitions.get(entry.tokenId);
+    assert.equal(definition?.kind, "wizardProperty");
+    assert.equal(definition.engine?.playableInV0, false);
   }
 });
 
@@ -61,6 +81,7 @@ function snapshot(state: GameState): unknown {
       discard: cardSnapshot(player.discard),
       playedThisTurn: cardSnapshot(player.playedThisTurn),
       permanents: cardSnapshot(player.permanents),
+      wizardProperties: tokenSnapshot(player.wizardProperties),
     })),
     common: {
       market: cardSnapshot(state.common.market),
@@ -81,6 +102,14 @@ function cardSnapshot(cards: CardInstance[]): unknown[] {
     instanceId: card.instanceId,
     definitionId: card.definitionId,
     ownerId: card.ownerId,
+  }));
+}
+
+function tokenSnapshot(tokens: GameState["players"][number]["wizardProperties"]): unknown[] {
+  return tokens.map((token) => ({
+    instanceId: token.instanceId,
+    definitionId: token.definitionId,
+    ownerId: token.ownerId,
   }));
 }
 

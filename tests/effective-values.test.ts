@@ -4,10 +4,12 @@ import test from "node:test";
 import {
   buildControlledObjectView,
   calculateEffectiveCardCost,
+  calculateEffectivePlayerMaxLife,
   initializeGame,
   listLegalActions,
   scoreGame,
   type StatusInstance,
+  type TokenDefinition,
   type TrophyLikeInstance,
 } from "../src/index.js";
 
@@ -57,7 +59,7 @@ test("omitting the controlled object removes the effective cost modifier", () =>
   );
 });
 
-test("controlled object view gathers separately stored cards, tokens, statuses, and trophy-like objects", () => {
+test("controlled object view gathers separately stored cards, tokens, wizard properties, statuses, and trophy-like objects", () => {
   const state = initializeGame({ rootDir, seed: 60615 });
   const player = state.players[0];
   assert.ok(player);
@@ -81,12 +83,14 @@ test("controlled object view gathers separately stored cards, tokens, statuses, 
     {
       cards: view.cards.map((object) => object.card.instanceId),
       tokens: view.tokens.map((object) => object.token.instanceId),
+      wizardProperties: view.wizardProperties.map((object) => object.token.instanceId),
       statuses: view.statuses.map((object) => object.instanceId),
       trophyLikeObjects: view.trophyLikeObjects.map((object) => object.instanceId),
     },
     {
       cards: [permanent.instanceId],
       tokens: [token.instanceId],
+      wizardProperties: player.wizardProperties.map((object) => object.instanceId),
       statuses: [status.instanceId],
       trophyLikeObjects: [trophy.instanceId],
     },
@@ -115,6 +119,25 @@ test("a controlled fixture object can modify token scoring without mutating toke
   assert.ok(score);
   assert.equal(score.victoryPoints, expectedCardScore + baseVictoryPoints + 1);
   assert.equal(definition.victoryPoints, baseVictoryPoints);
+});
+
+test("non-executable wizard property effects fail instead of applying silently", () => {
+  const state = initializeGame({ rootDir, seed: 60615 });
+  const player = state.players[0];
+  assert.ok(player);
+  const wizardProperty = player.wizardProperties[0];
+  assert.ok(wizardProperty);
+  const tokenDefinitions = new Map(state.tokenDefinitions);
+  tokenDefinitions.set(wizardProperty.definitionId, createNonExecutableMaxLifeWizardProperty(wizardProperty.definitionId, 3));
+  const stateWithDraftEffect = {
+    ...state,
+    tokenDefinitions,
+  };
+
+  assert.throws(
+    () => calculateEffectivePlayerMaxLife(stateWithDraftEffect, player.playerId),
+    /Cannot execute non-playable wizard property/,
+  );
 });
 
 function createCostModifierStatus(playerId: StatusInstance["ownerId"], definitionId: string, amount: number): StatusInstance {
@@ -161,6 +184,32 @@ function createTokenVictoryPointModifierTrophy(
         },
       },
     ],
+  };
+}
+
+function createNonExecutableMaxLifeWizardProperty(tokenId: string, amount: number): TokenDefinition {
+  return {
+    schemaVersion: 1,
+    tokenId,
+    runtimeSchema: "krutagidon.tokenDefinition.v0",
+    kind: "wizardProperty",
+    engine: {
+      mappingStatus: "draft",
+      playableInV0: false,
+      effects: [
+        {
+          effectId: "fixture_modify_effective_value",
+          timing: "whileControlled",
+          valueKind: "playerMaxLife",
+          operation: "add",
+          amount,
+          target: {
+            targetType: "player",
+          },
+        },
+      ],
+      unsupportedMechanics: ["fixture-non-executable-wizard-property"],
+    },
   };
 }
 
