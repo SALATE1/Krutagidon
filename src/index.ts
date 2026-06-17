@@ -2,6 +2,7 @@ export type { RandomSource } from "./engine/rng.js";
 export { createSeededRng } from "./engine/rng.js";
 export type {
   CardDefinition,
+  DataPackValidationOptions,
   DataPackValidationResult,
   DeckComposition,
   LoadedDataPack,

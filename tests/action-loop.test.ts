@@ -584,7 +584,7 @@ test("targeted fixture damage can kill an opponent, give a neutral DWT, resurrec
   assert.equal(targetScore.victoryPoints, expectedCardScore + expectedTokenScore);
 });
 
-test("fixture healing uses effective max life and logs clamping without mutating base max life", () => {
+test("heal uses effective max life and logs clamping without mutating base max life", () => {
   const state = initializeGame({ rootDir, seed: 60615 });
   const activePlayer = state.players.find((player) => player.playerId === state.activePlayerId);
   assert.ok(activePlayer);
@@ -592,7 +592,7 @@ test("fixture healing uses effective max life and logs clamping without mutating
   const baseMaxLife = activePlayer.life.max;
   activePlayer.statuses.push(createMaxLifeModifierStatus(activePlayer.playerId, -8));
   const fixtureCardId = addFixtureCardToActiveHand(state, {
-    effectId: "fixture_heal",
+    effectId: "heal",
     timing: "onPlay",
     amount: 20,
     target: {
@@ -614,6 +614,7 @@ test("fixture healing uses effective max life and logs clamping without mutating
         event.type === "effectLifeHealed" &&
         event.playerId === activePlayer.playerId &&
         event.targetPlayerId === activePlayer.playerId &&
+        event.effectId === "heal" &&
         event.amount === 7
       );
     }),
@@ -625,13 +626,13 @@ test("fixture healing uses effective max life and logs clamping without mutating
   );
 });
 
-test("fixture healing below effective max life does not clamp", () => {
+test("heal below effective max life does not clamp", () => {
   const state = initializeGame({ rootDir, seed: 60615 });
   const activePlayer = state.players.find((player) => player.playerId === state.activePlayerId);
   assert.ok(activePlayer);
   activePlayer.life.current = 10;
   const fixtureCardId = addFixtureCardToActiveHand(state, {
-    effectId: "fixture_heal",
+    effectId: "heal",
     timing: "onPlay",
     amount: 3,
     target: {
@@ -648,7 +649,12 @@ test("fixture healing below effective max life does not clamp", () => {
   assert.equal(activePlayer.life.current, 13);
   assert.ok(
     state.eventLog.some((event) => {
-      return event.type === "effectLifeHealed" && event.playerId === activePlayer.playerId && event.amount === 3;
+      return (
+        event.type === "effectLifeHealed" &&
+        event.playerId === activePlayer.playerId &&
+        event.effectId === "heal" &&
+        event.amount === 3
+      );
     }),
   );
   assert.equal(

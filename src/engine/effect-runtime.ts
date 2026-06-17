@@ -478,7 +478,7 @@ function executeEffect(
     return { ok: true };
   }
 
-  if (effect["effectId"] === "fixture_heal") {
+  if (effect["effectId"] === "heal") {
     const targetResult = resolveTargetChoice(state, player, effect, source);
     if (!targetResult.ok) {
       return targetResult;
@@ -503,7 +503,7 @@ function executeEffect(
       };
     }
 
-    healPlayer(state, player, targetResult.choice.player, amount, source);
+    healPlayer(state, player, targetResult.choice.player, amount, asString(effect["effectId"]), source);
     return { ok: true };
   }
 
@@ -1212,6 +1212,7 @@ function healPlayer(
   sourcePlayer: PlayerState,
   targetPlayer: PlayerState,
   amount: number,
+  effectId: string,
   source: EffectSourceContext,
 ): void {
   const effectiveMaxLife = calculateEffectivePlayerMaxLife(state, targetPlayer.playerId);
@@ -1226,7 +1227,7 @@ function healPlayer(
     targetPlayerId: targetPlayer.playerId,
     cardInstanceId: source.cardInstanceId,
     definitionId: source.definitionId,
-    effectId: "fixture_heal",
+    effectId,
     amount: healedAmount,
     sourceType: source.sourceType,
   });

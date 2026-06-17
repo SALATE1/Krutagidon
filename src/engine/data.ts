@@ -120,6 +120,10 @@ export type DataPackValidationResult =
       errors: string[];
     };
 
+export interface DataPackValidationOptions {
+  mode?: "combat" | "fixture";
+}
+
 export function loadV0DataPack(
   rootDir: string,
   manifestPath = "data/decks/v0-first-batch-data-pack.json",
@@ -149,8 +153,12 @@ export function loadV0DataPack(
   };
 }
 
-export function validateExecutableDataPack(dataPack: LoadedDataPack): DataPackValidationResult {
+export function validateExecutableDataPack(
+  dataPack: LoadedDataPack,
+  options: DataPackValidationOptions = {},
+): DataPackValidationResult {
   const errors: string[] = [];
+  const mode = options.mode ?? "combat";
 
   for (const definition of dataPack.cardDefinitions.values()) {
     if (!definition.engine.playableInV0) {
@@ -169,8 +177,18 @@ export function validateExecutableDataPack(dataPack: LoadedDataPack): DataPackVa
       }
 
       const effectId = effect["effectId"];
-      if (typeof effectId !== "string" || !isSupportedExecutableEffectId(effectId)) {
+      if (typeof effectId !== "string") {
         errors.push(`Card ${definition.cardId} uses unsupported effect id ${String(effectId)}`);
+        continue;
+      }
+
+      if (mode === "combat" && effectId.startsWith("fixture_")) {
+        errors.push(`Card ${definition.cardId} uses fixture effect id ${effectId} in combat data`);
+        continue;
+      }
+
+      if (!isSupportedExecutableEffectId(effectId, mode)) {
+        errors.push(`Card ${definition.cardId} uses unsupported effect id ${effectId}`);
         continue;
       }
 
@@ -225,23 +243,24 @@ function readJsonFile<T>(rootDir: string, filePath: string): T {
   return JSON.parse(readFileSync(absolutePath, "utf8")) as T;
 }
 
-function isSupportedExecutableEffectId(effectId: string): boolean {
+function isSupportedExecutableEffectId(effectId: string, mode: "combat" | "fixture"): boolean {
   return (
     effectId === "add_power" ||
+    effectId === "heal" ||
     effectId === "draw_cards" ||
-    effectId === "fixture_add_power_equal_to_target_cost" ||
-    effectId === "fixture_gain_card" ||
-    effectId === "fixture_discard_card" ||
-    effectId === "fixture_destroy_card" ||
-    effectId === "fixture_reveal_top_card" ||
-    effectId === "fixture_play_top_card" ||
-    effectId === "fixture_deal_damage" ||
-    effectId === "fixture_heal" ||
-    effectId === "fixture_single_target_attack" ||
-    effectId === "fixture_multi_target_attack" ||
-    effectId === "fixture_mayhem_attack" ||
-    effectId === "fixture_avoid_attack" ||
-    effectId === "fixture_modify_effective_value"
+    (mode === "fixture" &&
+      (effectId === "fixture_add_power_equal_to_target_cost" ||
+        effectId === "fixture_gain_card" ||
+        effectId === "fixture_discard_card" ||
+        effectId === "fixture_destroy_card" ||
+        effectId === "fixture_reveal_top_card" ||
+        effectId === "fixture_play_top_card" ||
+        effectId === "fixture_deal_damage" ||
+        effectId === "fixture_single_target_attack" ||
+        effectId === "fixture_multi_target_attack" ||
+        effectId === "fixture_mayhem_attack" ||
+        effectId === "fixture_avoid_attack" ||
+        effectId === "fixture_modify_effective_value"))
   );
 }
 
@@ -279,7 +298,7 @@ function validateSupportedEffectShape(cardId: string, effectId: string, effect: 
     return errors;
   }
 
-  if (effectId === "fixture_heal") {
+  if (effectId === "heal") {
     const errors: string[] = [];
     const amount = effect["amount"];
     if (typeof amount !== "number" || !Number.isSafeInteger(amount) || amount <= 0) {
