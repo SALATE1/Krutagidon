@@ -718,14 +718,14 @@ test("heal below effective max life does not clamp", () => {
   );
 });
 
-test("fixture single-target attack damages the first opponent when no defense is available", () => {
+test("attack_damage damages the first opponent when no defense is available", () => {
   const state = initializeGame({ rootDir, seed: 60615 });
   const activePlayer = state.players.find((player) => player.playerId === state.activePlayerId);
   assert.ok(activePlayer);
   const targetPlayer = state.players.find((player) => player.playerId !== activePlayer.playerId);
   assert.ok(targetPlayer);
   const fixtureCardId = addFixtureCardToActiveHand(state, {
-    effectId: "fixture_single_target_attack",
+    effectId: "attack_damage",
     timing: "onPlay",
     amount: 4,
     target: {
@@ -743,7 +743,7 @@ test("fixture single-target attack damages the first opponent when no defense is
   assert.ok(
     state.eventLog.some((event) => {
       return (
-        event.type === "fixtureAttackCreated" &&
+        event.type === "attackCreated" &&
         event.playerId === activePlayer.playerId &&
         event.targetPlayerId === targetPlayer.playerId &&
         event.amount === 4
@@ -757,7 +757,7 @@ test("fixture single-target attack damages the first opponent when no defense is
   );
 });
 
-test("fixture single-target attack kill awards Basic Trophy to the attacker", () => {
+test("attack_damage kill awards Basic Trophy to the attacker", () => {
   const state = initializeGame({ rootDir, seed: 60615 });
   const activePlayer = state.players.find((player) => player.playerId === state.activePlayerId);
   assert.ok(activePlayer);
@@ -765,7 +765,7 @@ test("fixture single-target attack kill awards Basic Trophy to the attacker", ()
   assert.ok(targetPlayer);
   targetPlayer.life.current = 1;
   const fixtureCardId = addFixtureCardToActiveHand(state, {
-    effectId: "fixture_single_target_attack",
+    effectId: "attack_damage",
     timing: "onPlay",
     amount: 4,
     target: {
@@ -787,13 +787,13 @@ test("fixture single-target attack kill awards Basic Trophy to the attacker", ()
         event.type === "trophyControlChanged" &&
         event.playerId === activePlayer.playerId &&
         event.targetPlayerId === targetPlayer.playerId &&
-        event.effectId === "fixture_single_target_attack"
+        event.effectId === "attack_damage"
       );
     }),
   );
 });
 
-test("fixture single-target attack kill transfers Basic Trophy from its previous controller", () => {
+test("attack_damage kill transfers Basic Trophy from its previous controller", () => {
   const state = initializeGame({ rootDir, seed: 60615 });
   const activePlayer = state.players.find((player) => player.playerId === state.activePlayerId);
   assert.ok(activePlayer);
@@ -802,7 +802,7 @@ test("fixture single-target attack kill transfers Basic Trophy from its previous
   targetPlayer.life.current = 1;
   targetPlayer.trophyLikeObjects.push(createBasicTrophy(targetPlayer.playerId));
   const fixtureCardId = addFixtureCardToActiveHand(state, {
-    effectId: "fixture_single_target_attack",
+    effectId: "attack_damage",
     timing: "onPlay",
     amount: 4,
     target: {
@@ -876,7 +876,7 @@ test("deal_damage kill does not move Basic Trophy", () => {
   assert.equal(state.eventLog.some((event) => event.type === "trophyControlChanged"), false);
 });
 
-test("fixture single-target attack can be avoided by the first discard-self defense card in hand", () => {
+test("attack_damage can be avoided by the first discard-self defense card in hand", () => {
   const state = initializeGame({ rootDir, seed: 60615 });
   const activePlayer = state.players.find((player) => player.playerId === state.activePlayerId);
   assert.ok(activePlayer);
@@ -885,7 +885,7 @@ test("fixture single-target attack can be avoided by the first discard-self defe
   targetPlayer.life.current = 1;
   const defenseCard = addFixtureDefenseCardToHand(state, targetPlayer, "discardSelf");
   const fixtureCardId = addFixtureCardToActiveHand(state, {
-    effectId: "fixture_single_target_attack",
+    effectId: "attack_damage",
     timing: "onPlay",
     amount: 4,
     target: {
@@ -920,7 +920,7 @@ test("fixture single-target attack can be avoided by the first discard-self defe
   );
   assert.ok(
     state.eventLog.some((event) => {
-      return event.type === "fixtureAttackAvoided" && event.playerId === targetPlayer.playerId;
+      return event.type === "attackAvoided" && event.playerId === targetPlayer.playerId;
     }),
   );
   assert.equal(
@@ -929,7 +929,7 @@ test("fixture single-target attack can be avoided by the first discard-self defe
   );
 });
 
-test("fixture single-target attack can be avoided by a topdeck-self defense card in hand", () => {
+test("attack_damage can be avoided by a topdeck-self defense card in hand", () => {
   const state = initializeGame({ rootDir, seed: 60615 });
   const activePlayer = state.players.find((player) => player.playerId === state.activePlayerId);
   assert.ok(activePlayer);
@@ -940,7 +940,7 @@ test("fixture single-target attack can be avoided by a topdeck-self defense card
   assert.ok(previousTopDeckCard);
   const defenseCard = addFixtureDefenseCardToHand(state, targetPlayer, "topdeckSelf");
   const fixtureCardId = addFixtureCardToActiveHand(state, {
-    effectId: "fixture_single_target_attack",
+    effectId: "attack_damage",
     timing: "onPlay",
     amount: 4,
     target: {
@@ -966,7 +966,7 @@ test("fixture single-target attack can be avoided by a topdeck-self defense card
   );
   assert.ok(
     state.eventLog.some((event) => {
-      return event.type === "fixtureAttackAvoided" && event.playerId === targetPlayer.playerId;
+      return event.type === "attackAvoided" && event.playerId === targetPlayer.playerId;
     }),
   );
   assert.equal(
@@ -975,7 +975,7 @@ test("fixture single-target attack can be avoided by a topdeck-self defense card
   );
 });
 
-test("fixture defense with an unpayable discard-other-card cost is not legal", () => {
+test("avoid_attack defense with an unpayable discard-other-card cost is not legal", () => {
   const state = initializeGame({ rootDir, seed: 60615 });
   const activePlayer = state.players.find((player) => player.playerId === state.activePlayerId);
   assert.ok(activePlayer);
@@ -986,7 +986,7 @@ test("fixture defense with an unpayable discard-other-card cost is not legal", (
     costs: [{ costId: "discard_other_hand_card" }],
   });
   const fixtureCardId = addFixtureCardToActiveHand(state, {
-    effectId: "fixture_single_target_attack",
+    effectId: "attack_damage",
     timing: "onPlay",
     amount: 4,
     target: {
@@ -1004,7 +1004,7 @@ test("fixture defense with an unpayable discard-other-card cost is not legal", (
   assert.equal(state.eventLog.some((event) => event.type === "defenseChoiceSelected"), false);
 });
 
-test("fixture defense pays discard, chip, and nonlethal life costs before avoiding an attack", () => {
+test("avoid_attack defense pays discard, chip, and nonlethal life costs before avoiding an attack", () => {
   const state = initializeGame({ rootDir, seed: 60615 });
   const activePlayer = state.players.find((player) => player.playerId === state.activePlayerId);
   assert.ok(activePlayer);
@@ -1018,7 +1018,7 @@ test("fixture defense pays discard, chip, and nonlethal life costs before avoidi
     costs: [{ costId: "discard_other_hand_card" }, { costId: "spend_chips", amount: 2 }, { costId: "pay_life", amount: 4 }],
   });
   const fixtureCardId = addFixtureCardToActiveHand(state, {
-    effectId: "fixture_single_target_attack",
+    effectId: "attack_damage",
     timing: "onPlay",
     amount: 4,
     target: {
@@ -1070,10 +1070,10 @@ test("fixture defense pays discard, chip, and nonlethal life costs before avoidi
       );
     }),
   );
-  assert.ok(state.eventLog.some((event) => event.type === "fixtureAttackAvoided"));
+  assert.ok(state.eventLog.some((event) => event.type === "attackAvoided"));
 });
 
-test("fixture defense with a lethal life cost is skipped for the next legal defense option", () => {
+test("avoid_attack defense with a lethal life cost is skipped for the next legal defense option", () => {
   const state = initializeGame({ rootDir, seed: 60615 });
   const activePlayer = state.players.find((player) => player.playerId === state.activePlayerId);
   assert.ok(activePlayer);
@@ -1085,7 +1085,7 @@ test("fixture defense with a lethal life cost is skipped for the next legal defe
   });
   const legalDefense = addFixtureDefenseCardToHand(state, targetPlayer, "discardSelf");
   const fixtureCardId = addFixtureCardToActiveHand(state, {
-    effectId: "fixture_single_target_attack",
+    effectId: "attack_damage",
     timing: "onPlay",
     amount: 4,
     target: {
@@ -1112,7 +1112,7 @@ test("fixture defense with a lethal life cost is skipped for the next legal defe
   );
 });
 
-test("fixture defense runs supported branch effects through the shared effect runtime after costs are paid", () => {
+test("avoid_attack defense runs supported branch effects through the shared effect runtime after costs are paid", () => {
   const state = initializeGame({ rootDir, seed: 60615 });
   const activePlayer = state.players.find((player) => player.playerId === state.activePlayerId);
   assert.ok(activePlayer);
@@ -1130,7 +1130,7 @@ test("fixture defense runs supported branch effects through the shared effect ru
     ],
   });
   const fixtureCardId = addFixtureCardToActiveHand(state, {
-    effectId: "fixture_single_target_attack",
+    effectId: "attack_damage",
     timing: "onPlay",
     amount: 4,
     target: {
@@ -1163,7 +1163,7 @@ test("fixture defense runs supported branch effects through the shared effect ru
   assert.ok(branchEventIndex > costEventIndex);
 });
 
-test("fixture multi-target attack resolves each opponent in seating order before moving to the next target", () => {
+test("multi_target_attack resolves each opponent in seating order before moving to the next target", () => {
   const state = initializeGame({ rootDir, seed: 60615, playerCount: 3 });
   const activePlayer = state.players.find((player) => player.playerId === state.activePlayerId);
   assert.ok(activePlayer);
@@ -1178,7 +1178,7 @@ test("fixture multi-target attack resolves each opponent in seating order before
   const onlyDwt = state.common.deadWizardTokens.drawStack[0];
   assert.ok(onlyDwt);
   const fixtureCardId = addFixtureCardToActiveHand(state, {
-    effectId: "fixture_multi_target_attack",
+    effectId: "multi_target_attack",
     timing: "onPlay",
     amount: 4,
     target: {
@@ -1198,17 +1198,17 @@ test("fixture multi-target attack resolves each opponent in seating order before
   assert.equal(firstTarget.deadWizardTokens[0], onlyDwt);
   assert.equal(secondTarget.deadWizardTokens.length, 0);
   assertEventOrder(state, [
-    (event) => event.type === "fixtureAttackTargetStarted" && event.targetPlayerId === firstTarget.playerId,
+    (event) => event.type === "attackTargetStarted" && event.targetPlayerId === firstTarget.playerId,
     (event) => event.type === "effectDamageDealt" && event.targetPlayerId === firstTarget.playerId,
     (event) => event.type === "playerDied" && event.playerId === firstTarget.playerId,
     (event) => event.type === "playerResurrected" && event.playerId === firstTarget.playerId,
-    (event) => event.type === "fixtureAttackTargetStarted" && event.targetPlayerId === secondTarget.playerId,
+    (event) => event.type === "attackTargetStarted" && event.targetPlayerId === secondTarget.playerId,
     (event) => event.type === "effectDamageDealt" && event.targetPlayerId === secondTarget.playerId,
     (event) => event.type === "playerDied" && event.playerId === secondTarget.playerId,
   ]);
 });
 
-test("fixture multi-target attack opens a separate defense window for each target", () => {
+test("multi_target_attack opens a separate defense window for each target", () => {
   const state = initializeGame({ rootDir, seed: 60615, playerCount: 3 });
   const activePlayer = state.players.find((player) => player.playerId === state.activePlayerId);
   assert.ok(activePlayer);
@@ -1219,7 +1219,7 @@ test("fixture multi-target attack opens a separate defense window for each targe
   secondTarget.life.current = 10;
   const defenseCard = addFixtureDefenseCardToHand(state, firstTarget, "discardSelf");
   const fixtureCardId = addFixtureCardToActiveHand(state, {
-    effectId: "fixture_multi_target_attack",
+    effectId: "multi_target_attack",
     timing: "onPlay",
     amount: 4,
     target: {
@@ -1238,15 +1238,15 @@ test("fixture multi-target attack opens a separate defense window for each targe
   assert.equal(firstTarget.discard.includes(defenseCard), true);
   assert.equal(secondTarget.life.current, 6);
   assertEventOrder(state, [
-    (event) => event.type === "fixtureAttackTargetStarted" && event.targetPlayerId === firstTarget.playerId,
+    (event) => event.type === "attackTargetStarted" && event.targetPlayerId === firstTarget.playerId,
     (event) => event.type === "defenseChoiceSelected" && event.playerId === firstTarget.playerId,
-    (event) => event.type === "fixtureAttackAvoided" && event.targetPlayerId === firstTarget.playerId,
-    (event) => event.type === "fixtureAttackTargetStarted" && event.targetPlayerId === secondTarget.playerId,
+    (event) => event.type === "attackAvoided" && event.targetPlayerId === firstTarget.playerId,
+    (event) => event.type === "attackTargetStarted" && event.targetPlayerId === secondTarget.playerId,
     (event) => event.type === "effectDamageDealt" && event.targetPlayerId === secondTarget.playerId,
   ]);
 });
 
-test("fixture Mayhem attack collects decisions for all players before resolving damage in active-player order", () => {
+test("mayhem_attack collects decisions for all players before resolving damage in active-player order", () => {
   const state = initializeGame({ rootDir, seed: 60615, playerCount: 3 });
   const activePlayer = state.players.find((player) => player.playerId === state.activePlayerId);
   assert.ok(activePlayer);
@@ -1261,7 +1261,7 @@ test("fixture Mayhem attack collects decisions for all players before resolving 
   thirdPlayer.life.current = 1;
   const defenseCard = addFixtureDefenseCardToHand(state, secondPlayer, "discardSelf");
   const fixtureCardId = addFixtureCardToActiveHand(state, {
-    effectId: "fixture_mayhem_attack",
+    effectId: "mayhem_attack",
     timing: "onPlay",
     amount: 4,
     target: {
@@ -1280,21 +1280,21 @@ test("fixture Mayhem attack collects decisions for all players before resolving 
   assert.equal(thirdPlayer.life.current, 20);
   assert.equal(secondPlayer.discard.includes(defenseCard), true);
   assertEventOrder(state, [
-    (event) => event.type === "fixtureMayhemDecisionPhaseStarted",
-    (event) => event.type === "fixtureMayhemDecisionStarted" && event.targetPlayerId === activePlayer.playerId,
-    (event) => event.type === "fixtureMayhemDecisionStarted" && event.targetPlayerId === secondPlayer.playerId,
+    (event) => event.type === "mayhemDecisionPhaseStarted",
+    (event) => event.type === "mayhemDecisionStarted" && event.targetPlayerId === activePlayer.playerId,
+    (event) => event.type === "mayhemDecisionStarted" && event.targetPlayerId === secondPlayer.playerId,
     (event) => event.type === "defenseChoiceSelected" && event.playerId === secondPlayer.playerId,
-    (event) => event.type === "fixtureMayhemDecisionStarted" && event.targetPlayerId === thirdPlayer.playerId,
-    (event) => event.type === "fixtureMayhemResolutionPhaseStarted",
-    (event) => event.type === "fixtureAttackTargetStarted" && event.targetPlayerId === activePlayer.playerId,
+    (event) => event.type === "mayhemDecisionStarted" && event.targetPlayerId === thirdPlayer.playerId,
+    (event) => event.type === "mayhemResolutionPhaseStarted",
+    (event) => event.type === "attackTargetStarted" && event.targetPlayerId === activePlayer.playerId,
     (event) => event.type === "effectDamageDealt" && event.targetPlayerId === activePlayer.playerId,
-    (event) => event.type === "fixtureMayhemTargetSkipped" && event.targetPlayerId === secondPlayer.playerId,
-    (event) => event.type === "fixtureAttackTargetStarted" && event.targetPlayerId === thirdPlayer.playerId,
+    (event) => event.type === "mayhemTargetSkipped" && event.targetPlayerId === secondPlayer.playerId,
+    (event) => event.type === "attackTargetStarted" && event.targetPlayerId === thirdPlayer.playerId,
     (event) => event.type === "playerDied" && event.playerId === thirdPlayer.playerId,
   ]);
 });
 
-test("fixture Mayhem attack kill does not move Basic Trophy", () => {
+test("mayhem_attack kill does not move Basic Trophy", () => {
   const state = initializeGame({ rootDir, seed: 60615, playerCount: 3 });
   const activePlayer = state.players.find((player) => player.playerId === state.activePlayerId);
   assert.ok(activePlayer);
@@ -1304,7 +1304,7 @@ test("fixture Mayhem attack kill does not move Basic Trophy", () => {
   targetPlayer.life.current = 1;
   targetPlayer.trophyLikeObjects.push(createBasicTrophy(targetPlayer.playerId));
   const fixtureCardId = addFixtureCardToActiveHand(state, {
-    effectId: "fixture_mayhem_attack",
+    effectId: "mayhem_attack",
     timing: "onPlay",
     amount: 4,
     target: {
@@ -1534,7 +1534,7 @@ function addFixtureDefenseCardToHand(
       marketChipMarker: false,
       effects: [
         {
-          effectId: "fixture_avoid_attack",
+          effectId: "avoid_attack",
           timing: "onDefense",
           destination,
           costs: options.costs,

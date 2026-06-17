@@ -248,6 +248,10 @@ function isSupportedExecutableEffectId(effectId: string, mode: "combat" | "fixtu
     effectId === "add_power" ||
     effectId === "heal" ||
     effectId === "deal_damage" ||
+    effectId === "attack_damage" ||
+    effectId === "multi_target_attack" ||
+    effectId === "mayhem_attack" ||
+    effectId === "avoid_attack" ||
     effectId === "gain_card" ||
     effectId === "discard_card" ||
     effectId === "destroy_card" ||
@@ -256,10 +260,6 @@ function isSupportedExecutableEffectId(effectId: string, mode: "combat" | "fixtu
     effectId === "draw_cards" ||
     (mode === "fixture" &&
       (effectId === "fixture_add_power_equal_to_target_cost" ||
-        effectId === "fixture_single_target_attack" ||
-        effectId === "fixture_multi_target_attack" ||
-        effectId === "fixture_mayhem_attack" ||
-        effectId === "fixture_avoid_attack" ||
         effectId === "fixture_modify_effective_value"))
   );
 }
@@ -314,7 +314,7 @@ function validateSupportedEffectShape(cardId: string, effectId: string, effect: 
     return errors;
   }
 
-  if (effectId === "fixture_single_target_attack") {
+  if (effectId === "attack_damage") {
     const errors: string[] = [];
     const amount = effect["amount"];
     if (typeof amount !== "number" || !Number.isSafeInteger(amount) || amount <= 0) {
@@ -322,7 +322,13 @@ function validateSupportedEffectShape(cardId: string, effectId: string, effect: 
     }
 
     const target = effect["target"];
-    if (!isEffectRecord(target) || target["selector"] !== "opponentPlayer") {
+    const targetSelector = effect["targetSelector"];
+    if (
+      (!isEffectRecord(target) || target["selector"] !== "opponentPlayer") &&
+      targetSelector !== "chosenFoe" &&
+      targetSelector !== "chosenPlayer" &&
+      targetSelector !== "eachFoe"
+    ) {
       const selector = isEffectRecord(target) ? target["selector"] : target;
       errors.push(`Card ${cardId} uses unsupported attack target ${String(selector)}`);
     }
@@ -330,7 +336,7 @@ function validateSupportedEffectShape(cardId: string, effectId: string, effect: 
     return errors;
   }
 
-  if (effectId === "fixture_multi_target_attack") {
+  if (effectId === "multi_target_attack") {
     const errors: string[] = [];
     const amount = effect["amount"];
     if (typeof amount !== "number" || !Number.isSafeInteger(amount) || amount <= 0) {
@@ -346,7 +352,7 @@ function validateSupportedEffectShape(cardId: string, effectId: string, effect: 
     return errors;
   }
 
-  if (effectId === "fixture_mayhem_attack") {
+  if (effectId === "mayhem_attack") {
     const errors: string[] = [];
     const amount = effect["amount"];
     if (typeof amount !== "number" || !Number.isSafeInteger(amount) || amount <= 0) {
@@ -362,7 +368,7 @@ function validateSupportedEffectShape(cardId: string, effectId: string, effect: 
     return errors;
   }
 
-  if (effectId === "fixture_avoid_attack") {
+  if (effectId === "avoid_attack") {
     const destination = effect["destination"];
     if (effect["timing"] !== "onDefense" || (destination !== "discardSelf" && destination !== "topdeckSelf")) {
       return [`Card ${cardId} uses unsupported defense branch ${String(destination)}`];

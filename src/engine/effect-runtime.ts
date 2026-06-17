@@ -370,7 +370,33 @@ function executeEffect(
     return { ok: true };
   }
 
-  if (effect["effectId"] === "fixture_single_target_attack") {
+  if (effect["effectId"] === "attack_damage" && effect["targetSelector"] === "eachFoe") {
+    const amount = effect["amount"];
+    if (typeof amount !== "number" || !Number.isSafeInteger(amount) || amount <= 0) {
+      return {
+        ok: false,
+        error: `Invalid attack damage amount ${String(amount)}`,
+      };
+    }
+
+    state.eventLog.push({
+      type: "attackCreated",
+      playerId: player.playerId,
+      cardInstanceId: source.cardInstanceId,
+      definitionId: source.definitionId,
+      effectId: "attack_damage",
+      amount,
+      sourceType: source.sourceType,
+    });
+
+    for (const targetPlayer of getOpponentsInSeatingOrder(state, player)) {
+      resolveAttackTarget(state, player, targetPlayer, amount, "attack_damage", source);
+    }
+
+    return { ok: true };
+  }
+
+  if (effect["effectId"] === "attack_damage") {
     const targetResult = resolveTargetChoice(state, player, effect, source);
     if (!targetResult.ok) {
       return targetResult;
@@ -395,36 +421,37 @@ function executeEffect(
       };
     }
 
+    const effectId = asString(effect["effectId"]);
     const targetPlayer = targetResult.choice.player;
     state.eventLog.push({
-      type: "fixtureAttackCreated",
+      type: "attackCreated",
       playerId: player.playerId,
       targetPlayerId: targetPlayer.playerId,
       cardInstanceId: source.cardInstanceId,
       definitionId: source.definitionId,
-      effectId: "fixture_single_target_attack",
+      effectId,
       amount,
       sourceType: source.sourceType,
     });
     if (resolveDefenseWindow(state, targetPlayer)) {
       state.eventLog.push({
-        type: "fixtureAttackAvoided",
+        type: "attackAvoided",
         playerId: targetPlayer.playerId,
         targetPlayerId: targetPlayer.playerId,
         cardInstanceId: source.cardInstanceId,
         definitionId: source.definitionId,
-        effectId: "fixture_single_target_attack",
+        effectId,
         sourceType: source.sourceType,
       });
       return { ok: true };
     }
 
-    dealDamage(state, player, targetPlayer, amount, "fixture_single_target_attack", source);
+    dealDamage(state, player, targetPlayer, amount, effectId, source);
 
     return { ok: true };
   }
 
-  if (effect["effectId"] === "fixture_multi_target_attack") {
+  if (effect["effectId"] === "multi_target_attack") {
     const target = effect["target"];
     if (!isEffectRecord(target) || target["selector"] !== "opponentPlayers") {
       const selector = isEffectRecord(target) ? target["selector"] : target;
@@ -443,23 +470,23 @@ function executeEffect(
     }
 
     state.eventLog.push({
-      type: "fixtureAttackCreated",
+      type: "attackCreated",
       playerId: player.playerId,
       cardInstanceId: source.cardInstanceId,
       definitionId: source.definitionId,
-      effectId: "fixture_multi_target_attack",
+      effectId: "multi_target_attack",
       amount,
       sourceType: source.sourceType,
     });
 
     for (const targetPlayer of getOpponentsInSeatingOrder(state, player)) {
-      resolveFixtureAttackTarget(state, player, targetPlayer, amount, "fixture_multi_target_attack", source);
+      resolveAttackTarget(state, player, targetPlayer, amount, "multi_target_attack", source);
     }
 
     return { ok: true };
   }
 
-  if (effect["effectId"] === "fixture_mayhem_attack") {
+  if (effect["effectId"] === "mayhem_attack") {
     const target = effect["target"];
     if (!isEffectRecord(target) || target["selector"] !== "allPlayers") {
       const selector = isEffectRecord(target) ? target["selector"] : target;
@@ -477,7 +504,7 @@ function executeEffect(
       };
     }
 
-    resolveFixtureMayhemAttack(state, player, amount, "fixture_mayhem_attack", source);
+    resolveMayhemAttack(state, player, amount, "mayhem_attack", source);
     return { ok: true };
   }
 
@@ -513,7 +540,7 @@ function executeEffect(
   return { ok: true };
 }
 
-function resolveFixtureAttackTarget(
+function resolveAttackTarget(
   state: GameState,
   attackingPlayer: PlayerState,
   targetPlayer: PlayerState,
@@ -522,7 +549,7 @@ function resolveFixtureAttackTarget(
   source: EffectSourceContext,
 ): void {
   state.eventLog.push({
-    type: "fixtureAttackTargetStarted",
+    type: "attackTargetStarted",
     playerId: attackingPlayer.playerId,
     targetPlayerId: targetPlayer.playerId,
     cardInstanceId: source.cardInstanceId,
@@ -534,7 +561,7 @@ function resolveFixtureAttackTarget(
 
   if (resolveDefenseWindow(state, targetPlayer)) {
     state.eventLog.push({
-      type: "fixtureAttackAvoided",
+      type: "attackAvoided",
       playerId: targetPlayer.playerId,
       targetPlayerId: targetPlayer.playerId,
       cardInstanceId: source.cardInstanceId,
@@ -548,7 +575,7 @@ function resolveFixtureAttackTarget(
   dealDamage(state, attackingPlayer, targetPlayer, amount, effectId, source);
 }
 
-function resolveFixtureMayhemAttack(
+function resolveMayhemAttack(
   state: GameState,
   sourcePlayer: PlayerState,
   amount: number,
@@ -559,7 +586,7 @@ function resolveFixtureMayhemAttack(
   const decisions: Array<{ player: PlayerState; avoided: boolean }> = [];
 
   state.eventLog.push({
-    type: "fixtureMayhemDecisionPhaseStarted",
+    type: "mayhemDecisionPhaseStarted",
     playerId: sourcePlayer.playerId,
     cardInstanceId: source.cardInstanceId,
     definitionId: source.definitionId,
@@ -570,7 +597,7 @@ function resolveFixtureMayhemAttack(
 
   for (const targetPlayer of targets) {
     state.eventLog.push({
-      type: "fixtureMayhemDecisionStarted",
+      type: "mayhemDecisionStarted",
       playerId: sourcePlayer.playerId,
       targetPlayerId: targetPlayer.playerId,
       cardInstanceId: source.cardInstanceId,
@@ -582,7 +609,7 @@ function resolveFixtureMayhemAttack(
     const avoided = resolveDefenseWindow(state, targetPlayer);
     if (avoided) {
       state.eventLog.push({
-        type: "fixtureAttackAvoided",
+        type: "attackAvoided",
         playerId: targetPlayer.playerId,
         targetPlayerId: targetPlayer.playerId,
         cardInstanceId: source.cardInstanceId,
@@ -596,7 +623,7 @@ function resolveFixtureMayhemAttack(
   }
 
   state.eventLog.push({
-    type: "fixtureMayhemResolutionPhaseStarted",
+    type: "mayhemResolutionPhaseStarted",
     playerId: sourcePlayer.playerId,
     cardInstanceId: source.cardInstanceId,
     definitionId: source.definitionId,
@@ -608,7 +635,7 @@ function resolveFixtureMayhemAttack(
   for (const decision of decisions) {
     if (decision.avoided) {
       state.eventLog.push({
-        type: "fixtureMayhemTargetSkipped",
+        type: "mayhemTargetSkipped",
         playerId: sourcePlayer.playerId,
         targetPlayerId: decision.player.playerId,
         cardInstanceId: source.cardInstanceId,
@@ -620,7 +647,7 @@ function resolveFixtureMayhemAttack(
     }
 
     state.eventLog.push({
-      type: "fixtureAttackTargetStarted",
+      type: "attackTargetStarted",
       playerId: sourcePlayer.playerId,
       targetPlayerId: decision.player.playerId,
       cardInstanceId: source.cardInstanceId,
@@ -740,6 +767,29 @@ function buildLegalTargetChoices(
 ): { ok: true; choices: TargetChoice[] } | { ok: false; error: string } {
   const target = effect["target"];
   if (!isEffectRecord(target)) {
+    const targetSelector = effect["targetSelector"];
+    if (targetSelector === "chosenFoe") {
+      return {
+        ok: true,
+        choices: state.players
+          .filter((candidate) => candidate.playerId !== player.playerId)
+          .map((candidate) => ({
+            choiceType: "player" as const,
+            player: candidate,
+          })),
+      };
+    }
+
+    if (targetSelector === "chosenPlayer") {
+      return {
+        ok: true,
+        choices: state.players.map((candidate) => ({
+          choiceType: "player" as const,
+          player: candidate,
+        })),
+      };
+    }
+
     return {
       ok: false,
       error: `Effect ${asString(effect["effectId"])} requires a target selector`,
@@ -784,6 +834,16 @@ function buildLegalTargetChoices(
           choiceType: "player" as const,
           player: candidate,
         })),
+    };
+  }
+
+  if (selector === "anyPlayer") {
+    return {
+      ok: true,
+      choices: state.players.map((candidate) => ({
+        choiceType: "player" as const,
+        player: candidate,
+      })),
     };
   }
 
@@ -919,7 +979,7 @@ function awardBasicTrophyForKill(
 }
 
 function givesBasicTrophyCredit(effectId: string): boolean {
-  return effectId === "fixture_single_target_attack" || effectId === "fixture_multi_target_attack";
+  return effectId === "attack_damage" || effectId === "multi_target_attack";
 }
 
 function dealDamage(
@@ -968,7 +1028,7 @@ function resolveDefenseWindow(state: GameState, defendingPlayer: PlayerState): b
     playerId: defendingPlayer.playerId,
     cardInstanceId: defense.card.instanceId,
     definitionId: defense.card.definitionId,
-    effectId: "fixture_avoid_attack",
+    effectId: "avoid_attack",
   });
 
   if (!payDefenseCosts(state, defendingPlayer, defense.card, defense.effect)) {
@@ -1044,7 +1104,7 @@ function findFirstLegalDefense(
     const defenseEffect = definition.engine.effects.find((effect): effect is Record<string, unknown> => {
       return (
         isEffectRecord(effect) &&
-        effect["effectId"] === "fixture_avoid_attack" &&
+        effect["effectId"] === "avoid_attack" &&
         effect["timing"] === "onDefense" &&
         (effect["destination"] === "discardSelf" || effect["destination"] === "topdeckSelf")
       );

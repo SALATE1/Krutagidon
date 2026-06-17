@@ -127,11 +127,11 @@ test("supported executable card movement and deck effects pass executable effect
   assert.deepEqual(result, { ok: true });
 });
 
-test("supported executable attack and defense fixtures pass executable effect validation in fixture mode", () => {
+test("supported executable attack and defense effects pass executable effect validation", () => {
   const attackCard = createFixtureCard("fixture-supported-attack-effect");
   const defenseCard = createFixtureCard("fixture-supported-defense-effect");
   const dataPack = loadV0DataPack(rootDir);
-  const fixtureDataPack: LoadedDataPack = {
+  const attackDataPack: LoadedDataPack = {
     ...dataPack,
     cardDefinitions: new Map([
       [
@@ -143,7 +143,7 @@ test("supported executable attack and defense fixtures pass executable effect va
             playableInV0: true,
             effects: [
               {
-                effectId: "fixture_single_target_attack",
+                effectId: "attack_damage",
                 timing: "onPlay",
                 amount: 4,
                 target: {
@@ -163,7 +163,7 @@ test("supported executable attack and defense fixtures pass executable effect va
             playableInV0: true,
             effects: [
               {
-                effectId: "fixture_avoid_attack",
+                effectId: "avoid_attack",
                 timing: "onDefense",
                 destination: "discardSelf",
               },
@@ -174,12 +174,12 @@ test("supported executable attack and defense fixtures pass executable effect va
     ]),
   };
 
-  const result = validateExecutableDataPack(fixtureDataPack, { mode: "fixture" });
+  const result = validateExecutableDataPack(attackDataPack);
 
   assert.deepEqual(result, { ok: true });
 });
 
-test("supported executable multi-target attack fixture passes executable effect validation in fixture mode", () => {
+test("supported executable multi-target attack passes executable effect validation", () => {
   const card = createFixtureCard("fixture-supported-multi-target-attack-effect");
   const dataPack = withOnlyFixtureCard({
     ...card,
@@ -188,7 +188,7 @@ test("supported executable multi-target attack fixture passes executable effect 
       playableInV0: true,
       effects: [
         {
-          effectId: "fixture_multi_target_attack",
+          effectId: "multi_target_attack",
           timing: "onPlay",
           amount: 4,
           target: {
@@ -199,12 +199,12 @@ test("supported executable multi-target attack fixture passes executable effect 
     },
   });
 
-  const result = validateExecutableDataPack(dataPack, { mode: "fixture" });
+  const result = validateExecutableDataPack(dataPack);
 
   assert.deepEqual(result, { ok: true });
 });
 
-test("supported executable Mayhem attack fixture passes executable effect validation in fixture mode", () => {
+test("supported executable Mayhem attack passes executable effect validation", () => {
   const card = createFixtureCard("fixture-supported-mayhem-attack-effect");
   const dataPack = withOnlyFixtureCard({
     ...card,
@@ -213,7 +213,7 @@ test("supported executable Mayhem attack fixture passes executable effect valida
       playableInV0: true,
       effects: [
         {
-          effectId: "fixture_mayhem_attack",
+          effectId: "mayhem_attack",
           timing: "onPlay",
           amount: 4,
           target: {
@@ -224,7 +224,7 @@ test("supported executable Mayhem attack fixture passes executable effect valida
     },
   });
 
-  const result = validateExecutableDataPack(dataPack, { mode: "fixture" });
+  const result = validateExecutableDataPack(dataPack);
   assert.deepEqual(result, { ok: true });
 });
 
@@ -237,11 +237,10 @@ test("combat data-pack validation rejects fixture effect ids", () => {
       playableInV0: true,
       effects: [
         {
-          effectId: "fixture_single_target_attack",
+          effectId: "fixture_add_power_equal_to_target_cost",
           timing: "onPlay",
-          amount: 1,
           target: {
-            selector: "opponentPlayer",
+            selector: "mainMarketCard",
           },
         },
       ],
@@ -253,7 +252,7 @@ test("combat data-pack validation rejects fixture effect ids", () => {
   assert.equal(result.ok, false);
   assert.ok(
     result.errors.some((error) => {
-      return error.includes("fixture-effect-in-combat-data") && error.includes("fixture_single_target_attack");
+      return error.includes("fixture-effect-in-combat-data") && error.includes("fixture_add_power_equal_to_target_cost");
     }),
   );
 });
@@ -373,7 +372,7 @@ test("executable data-pack validation rejects redirect defense branches", () => 
       playableInV0: true,
       effects: [
         {
-          effectId: "fixture_avoid_attack",
+          effectId: "avoid_attack",
           timing: "onDefense",
           destination: "redirectTarget",
         },

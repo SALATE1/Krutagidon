@@ -1,7 +1,7 @@
 # Promote attack and defense mechanics
 
-Status: ready-for-agent
-Label: ready-for-agent
+Status: done
+Label: done
 Type: AFK
 
 ## Parent
@@ -14,12 +14,12 @@ Type: AFK
 
 ## Acceptance criteria
 
-- [ ] Обычная атака выбирает цель, открывает defense window и наносит урон, если защита не использована.
-- [ ] Легальная защита избегает одну attack instance и платит/перемещает карту по mapped defense data.
-- [ ] Attack kill корректно дает attack credit и Basic Trophy Credit там, где это предусмотрено canon.
-- [ ] Multi-target normal attack разрешается цель-за-целью, с учетом state changes между целями.
-- [ ] Mayhem/MegaMayhem attack собирает защиты фазой и потом разрешает атаку по canon.
-- [ ] Старые attack/defense `fixture_*` IDs не используются в promoted tests после миграции.
+- [x] Обычная атака выбирает цель, открывает defense window и наносит урон, если защита не использована.
+- [x] Легальная защита избегает одну attack instance и платит/перемещает карту по mapped defense data.
+- [x] Attack kill корректно дает attack credit и Basic Trophy Credit там, где это предусмотрено canon.
+- [x] Multi-target normal attack разрешается цель-за-целью, с учетом state changes между целями.
+- [x] Mayhem/MegaMayhem attack собирает защиты фазой и потом разрешает атаку по canon.
+- [x] Старые attack/defense `fixture_*` IDs не используются в promoted tests после миграции.
 
 ## Blocked by
 
