@@ -48,3 +48,4 @@ export type {
   RunMassSimulationOptions,
 } from "./engine/mass-simulation.js";
 export { runMassSimulation } from "./engine/mass-simulation.js";
+export { formatMassSimulationSummary, formatSingleGameSummary, runSimulationMenu } from "./cli/simulation-menu.js";
