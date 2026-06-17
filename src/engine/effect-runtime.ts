@@ -19,6 +19,24 @@ export function executeOnPlayEffects(
   return executeEffects(state, player, definition.engine.effects, "onPlay", source);
 }
 
+export function executeActivationEffects(
+  state: GameState,
+  player: PlayerState,
+  definition: CardDefinition,
+  source: EffectSourceContext,
+): EffectExecutionResult {
+  return executeEffects(state, player, definition.engine.effects, "activation", source);
+}
+
+export function executeMayhemEffects(
+  state: GameState,
+  player: PlayerState,
+  definition: CardDefinition,
+  source: EffectSourceContext,
+): EffectExecutionResult {
+  return executeEffects(state, player, definition.engine.effects, "onMayhemResolve", source);
+}
+
 function executeEffects(
   state: GameState,
   player: PlayerState,
@@ -31,6 +49,13 @@ function executeEffects(
       continue;
     }
 
+    if (timing === "onMayhemResolve" && !isSupportedMayhemRuntimeEffect(effect)) {
+      return {
+        ok: false,
+        error: `Unsupported Mayhem effect id ${asString(effect["effectId"])}`,
+      };
+    }
+
     const result = executeEffect(state, player, effect, source);
     if (!result.ok) {
       return result;
@@ -38,6 +63,32 @@ function executeEffects(
   }
 
   return { ok: true };
+}
+
+function isSupportedMayhemRuntimeEffect(effect: Record<string, unknown>): boolean {
+  const effectId = effect["effectId"];
+  return (
+    effectId === "add_power" ||
+    effectId === "heal" ||
+    effectId === "set_life" ||
+    effectId === "deal_damage" ||
+    effectId === "attack_damage" ||
+    effectId === "multi_target_attack" ||
+    effectId === "mayhem_attack" ||
+    effectId === "mega_mayhem_set_life" ||
+    effectId === "mega_mayhem_each_player_destroy_top_main_deck_death_if_mayhem" ||
+    effectId === "mega_mayhem_each_player_toggle_dingler" ||
+    effectId === "mayhem_each_player_discard_top_deck_cards_choose_destroy_all_or_none" ||
+    effectId === "mayhem_each_player_choose_discard_hand_draw_or_take_damage" ||
+    effectId === "mayhem_each_player_discard_deck_then_destroy_from_discard" ||
+    effectId === "gain_card" ||
+    effectId === "discard_card" ||
+    effectId === "destroy_card" ||
+    effectId === "reveal_top_card" ||
+    effectId === "play_top_card" ||
+    effectId === "draw_cards" ||
+    effectId === "wild_magic_choice"
+  );
 }
 
 export type EffectExecutionResult =
@@ -70,6 +121,42 @@ function executeEffect(
       });
     }
 
+    return { ok: true };
+  }
+
+  if (effect["effectId"] === "wild_magic_choice") {
+    const options = effect["options"];
+    if (!Array.isArray(options)) {
+      return {
+        ok: false,
+        error: "Wild Magic effect requires options",
+      };
+    }
+
+    for (const option of options) {
+      if (!isEffectRecord(option) || !isLegalWildMagicOption(state, player, option)) {
+        continue;
+      }
+
+      state.eventLog.push({
+        type: "wildMagicChoiceSelected",
+        playerId: player.playerId,
+        cardInstanceId: source.cardInstanceId,
+        definitionId: source.definitionId,
+        effectId: asString(option["effectId"]),
+        sourceType: source.sourceType,
+      });
+      return executeEffect(state, player, option, source);
+    }
+
+    state.eventLog.push({
+      type: "wildMagicChoiceSkipped",
+      playerId: player.playerId,
+      cardInstanceId: source.cardInstanceId,
+      definitionId: source.definitionId,
+      effectId: "wild_magic_choice",
+      sourceType: source.sourceType,
+    });
     return { ok: true };
   }
 
@@ -340,6 +427,85 @@ function executeEffect(
     return { ok: true };
   }
 
+  if (effect["effectId"] === "play_top_card_from_foe_deck") {
+    if (effect["targetSelector"] !== "chosenFoe") {
+      return {
+        ok: false,
+        error: `Unsupported foe-deck target ${asString(effect["targetSelector"])}`,
+      };
+    }
+
+    const foe = getOpponentsInSeatingOrder(state, player).find((candidate) => {
+      return candidate.deck.length > 0 || candidate.discard.length > 0;
+    });
+    if (foe === undefined) {
+      state.eventLog.push({
+        type: "effectPlayTopFoeDeckSkipped",
+        playerId: player.playerId,
+        cardInstanceId: source.cardInstanceId,
+        definitionId: source.definitionId,
+        effectId: asString(effect["effectId"]),
+        sourceType: source.sourceType,
+      });
+      return { ok: true };
+    }
+
+    const card = drawTopDeckCard(foe, state);
+    if (card === undefined) {
+      state.eventLog.push({
+        type: "effectPlayTopFoeDeckSkipped",
+        playerId: player.playerId,
+        targetPlayerId: foe.playerId,
+        cardInstanceId: source.cardInstanceId,
+        definitionId: source.definitionId,
+        effectId: asString(effect["effectId"]),
+        sourceType: source.sourceType,
+      });
+      return { ok: true };
+    }
+
+    const originalOwnerId = card.ownerId;
+    const definition = state.cardDefinitions.get(card.definitionId);
+    if (definition === undefined) {
+      return {
+        ok: false,
+        error: `Missing card definition ${card.definitionId}`,
+      };
+    }
+
+    if (definition.engine.isOngoing) {
+      card.ownerId = player.playerId;
+      player.permanents.push(card);
+    } else {
+      card.ownerId = originalOwnerId;
+      player.playedThisTurn.push(card);
+    }
+
+    const playedResult = executeOnPlayEffects(state, player, definition, {
+      sourceType: "card",
+      playerId: player.playerId,
+      cardInstanceId: card.instanceId,
+      definitionId: card.definitionId,
+    });
+    if (!playedResult.ok) {
+      return playedResult;
+    }
+
+    state.eventLog.push({
+      type: "effectFoeDeckCardPlayed",
+      playerId: player.playerId,
+      targetPlayerId: foe.playerId,
+      cardInstanceId: source.cardInstanceId,
+      definitionId: source.definitionId,
+      targetCardInstanceId: card.instanceId,
+      targetDefinitionId: card.definitionId,
+      effectId: asString(effect["effectId"]),
+      sourceType: source.sourceType,
+    });
+
+    return { ok: true };
+  }
+
   if (effect["effectId"] === "deal_damage") {
     const targetResult = resolveTargetChoice(state, player, effect, source);
     if (!targetResult.ok) {
@@ -537,6 +703,234 @@ function executeEffect(
     return { ok: true };
   }
 
+  if (effect["effectId"] === "set_life") {
+    const targetResult = resolveTargetChoice(state, player, effect, source);
+    if (!targetResult.ok) {
+      return targetResult;
+    }
+
+    if (targetResult.choice === undefined) {
+      return { ok: true };
+    }
+
+    if (targetResult.choice.choiceType !== "player") {
+      return {
+        ok: false,
+        error: "Set-life effect requires a player target",
+      };
+    }
+
+    const lifeTotal = effect["lifeTotal"];
+    if (typeof lifeTotal !== "number" || !Number.isSafeInteger(lifeTotal) || lifeTotal < 1) {
+      return {
+        ok: false,
+        error: `Invalid life total ${String(lifeTotal)}`,
+      };
+    }
+
+    targetResult.choice.player.life.current = lifeTotal;
+    state.eventLog.push({
+      type: "effectLifeSet",
+      playerId: player.playerId,
+      targetPlayerId: targetResult.choice.player.playerId,
+      cardInstanceId: source.cardInstanceId,
+      definitionId: source.definitionId,
+      effectId: asString(effect["effectId"]),
+      amount: lifeTotal,
+      sourceType: source.sourceType,
+    });
+    return { ok: true };
+  }
+
+  if (effect["effectId"] === "mega_mayhem_set_life" && effect["targetSelector"] === "eachPlayerClockwiseFromActive") {
+    const lifeTotal = effect["lifeTotal"];
+    if (typeof lifeTotal !== "number" || !Number.isSafeInteger(lifeTotal) || lifeTotal < 1) {
+      return {
+        ok: false,
+        error: `Invalid life total ${String(lifeTotal)}`,
+      };
+    }
+
+    for (const targetPlayer of getPlayersInActiveOrder(state)) {
+      targetPlayer.life.current = lifeTotal;
+      state.eventLog.push({
+        type: "effectLifeSet",
+        playerId: player.playerId,
+        targetPlayerId: targetPlayer.playerId,
+        cardInstanceId: source.cardInstanceId,
+        definitionId: source.definitionId,
+        effectId: asString(effect["effectId"]),
+        amount: lifeTotal,
+        sourceType: source.sourceType,
+      });
+    }
+    return { ok: true };
+  }
+
+  if (effect["effectId"] === "mega_mayhem_each_player_destroy_top_main_deck_death_if_mayhem") {
+    for (const targetPlayer of getPlayersInActiveOrder(state)) {
+      const destroyedCard = state.common.mainDeck.shift();
+      if (destroyedCard === undefined) {
+        state.eventLog.push({
+          type: "effectDestroyTopMainDeckSkipped",
+          playerId: targetPlayer.playerId,
+          cardInstanceId: source.cardInstanceId,
+          definitionId: source.definitionId,
+          effectId: asString(effect["effectId"]),
+          sourceType: source.sourceType,
+        });
+        continue;
+      }
+
+      const destination = getDestroyDestination(state, destroyedCard);
+      if (!destination.ok) {
+        return destination;
+      }
+
+      destination.zone.push(destroyedCard);
+      state.eventLog.push({
+        type: "effectTopMainDeckCardDestroyed",
+        playerId: targetPlayer.playerId,
+        cardInstanceId: source.cardInstanceId,
+        definitionId: source.definitionId,
+        targetCardInstanceId: destroyedCard.instanceId,
+        targetDefinitionId: destroyedCard.definitionId,
+        effectId: asString(effect["effectId"]),
+        sourceType: source.sourceType,
+      });
+
+      const destroyedDefinition = state.cardDefinitions.get(destroyedCard.definitionId);
+      if (destroyedDefinition?.engine.cardKind === "mayhem") {
+        resolvePlayerDeath(state, targetPlayer, undefined);
+      }
+    }
+    return { ok: true };
+  }
+
+  if (effect["effectId"] === "mega_mayhem_each_player_toggle_dingler") {
+    for (const targetPlayer of getPlayersInActiveOrder(state)) {
+      const dinglerIndex = targetPlayer.statuses.findIndex((status) => status.statusId === "dingler");
+      if (dinglerIndex >= 0) {
+        targetPlayer.statuses.splice(dinglerIndex, 1);
+        state.eventLog.push({
+          type: "dinglerStatusRemoved",
+          playerId: targetPlayer.playerId,
+          cardInstanceId: source.cardInstanceId,
+          definitionId: source.definitionId,
+          effectId: asString(effect["effectId"]),
+          sourceType: source.sourceType,
+        });
+        continue;
+      }
+
+      targetPlayer.statuses.push(createDinglerStatus(targetPlayer.playerId));
+      targetPlayer.life.current = Math.min(targetPlayer.life.current, 15);
+      state.eventLog.push({
+        type: "dinglerStatusGained",
+        playerId: targetPlayer.playerId,
+        cardInstanceId: source.cardInstanceId,
+        definitionId: source.definitionId,
+        effectId: asString(effect["effectId"]),
+        sourceType: source.sourceType,
+      });
+    }
+    return { ok: true };
+  }
+
+  if (effect["effectId"] === "mayhem_each_player_discard_top_deck_cards_choose_destroy_all_or_none") {
+    const amount = effect["amount"];
+    if (typeof amount !== "number" || !Number.isSafeInteger(amount) || amount < 0) {
+      return {
+        ok: false,
+        error: `Invalid Mayhem discard amount ${String(amount)}`,
+      };
+    }
+
+    for (const targetPlayer of getPlayersInActiveOrder(state)) {
+      const discardedCards = discardTopDeckCards(state, targetPlayer, amount);
+      for (const discardedCard of discardedCards) {
+        const destination = getDestroyDestination(state, discardedCard);
+        if (!destination.ok) {
+          return destination;
+        }
+
+        if (!moveCardToZonePreservingOwner(state, discardedCard, destination.zone)) {
+          return {
+            ok: false,
+            error: `Cannot destroy discarded card ${discardedCard.instanceId}`,
+          };
+        }
+      }
+
+      state.eventLog.push({
+        type: "mayhemDiscardedTopDeckCardsDestroyed",
+        playerId: targetPlayer.playerId,
+        cardInstanceId: source.cardInstanceId,
+        definitionId: source.definitionId,
+        effectId: asString(effect["effectId"]),
+        amount: discardedCards.length,
+        sourceType: source.sourceType,
+      });
+    }
+    return { ok: true };
+  }
+
+  if (effect["effectId"] === "mayhem_each_player_choose_discard_hand_draw_or_take_damage") {
+    for (const targetPlayer of getPlayersInActiveOrder(state)) {
+      const discardedCount = targetPlayer.hand.length;
+      targetPlayer.discard.push(...targetPlayer.hand.splice(0));
+      const drawnCount = drawCards(targetPlayer, 5, state);
+      state.eventLog.push({
+        type: "mayhemHandDiscardedAndRedrawn",
+        playerId: targetPlayer.playerId,
+        cardInstanceId: source.cardInstanceId,
+        definitionId: source.definitionId,
+        effectId: asString(effect["effectId"]),
+        amount: discardedCount + drawnCount,
+        sourceType: source.sourceType,
+      });
+    }
+    return { ok: true };
+  }
+
+  if (effect["effectId"] === "mayhem_each_player_discard_deck_then_destroy_from_discard") {
+    for (const targetPlayer of getPlayersInActiveOrder(state)) {
+      const discardedCount = targetPlayer.deck.length;
+      targetPlayer.discard.push(...targetPlayer.deck.splice(0));
+      const destroyTarget = targetPlayer.discard[0];
+      if (destroyTarget !== undefined) {
+        const destination = getDestroyDestination(state, destroyTarget);
+        if (!destination.ok) {
+          return destination;
+        }
+
+        if (!moveCardToZonePreservingOwner(state, destroyTarget, destination.zone)) {
+          return {
+            ok: false,
+            error: `Cannot destroy discarded card ${destroyTarget.instanceId}`,
+          };
+        }
+      }
+
+      state.eventLog.push({
+        type: "mayhemDeckDiscardedThenDiscardCardDestroyed",
+        playerId: targetPlayer.playerId,
+        cardInstanceId: source.cardInstanceId,
+        definitionId: source.definitionId,
+        ...(destroyTarget === undefined
+          ? {}
+          : {
+              targetCardInstanceId: destroyTarget.instanceId,
+              targetDefinitionId: destroyTarget.definitionId,
+            }),
+        effectId: asString(effect["effectId"]),
+        amount: discardedCount,
+        sourceType: source.sourceType,
+      });
+    }
+    return { ok: true };
+  }
+
   return { ok: true };
 }
 
@@ -669,6 +1063,19 @@ function getOpponentsInSeatingOrder(state: GameState, player: PlayerState): Play
   return Array.from({ length: state.players.length - 1 }, (_, offset) => {
     return state.players[(playerIndex + offset + 1) % state.players.length];
   }).filter((candidate): candidate is PlayerState => candidate !== undefined);
+}
+
+function isLegalWildMagicOption(state: GameState, player: PlayerState, option: Record<string, unknown>): boolean {
+  if (option["effectId"] === "add_power") {
+    const amount = option["amount"];
+    return typeof amount === "number" && Number.isSafeInteger(amount) && amount > 0;
+  }
+
+  if (option["effectId"] === "play_top_card_from_foe_deck") {
+    return getOpponentsInSeatingOrder(state, player).some((foe) => foe.deck.length > 0 || foe.discard.length > 0);
+  }
+
+  return false;
 }
 
 function getPlayersInActiveOrder(state: GameState): PlayerState[] {
@@ -1310,8 +1717,21 @@ function moveCardToPlayerZone(
   player: PlayerState,
   destination: CardInstance[],
 ): boolean {
+  const marketChips = card.marketChips;
   if (!removeCardFromKnownZones(state, card)) {
     return false;
+  }
+
+  if (marketChips > 0) {
+    player.chips += marketChips;
+    card.marketChips = 0;
+    state.eventLog.push({
+      type: "marketChipsGained",
+      playerId: player.playerId,
+      cardInstanceId: card.instanceId,
+      definitionId: card.definitionId,
+      amount: marketChips,
+    });
   }
 
   card.ownerId = player.playerId;
@@ -1398,6 +1818,43 @@ function drawCards(player: PlayerState, count: number, state: GameState): number
   }
 
   return drawnCount;
+}
+
+function discardTopDeckCards(state: GameState, player: PlayerState, count: number): CardInstance[] {
+  const discardedCards: CardInstance[] = [];
+  for (let index = 0; index < count; index += 1) {
+    shuffleDiscardIntoDeckIfNeeded(player, state);
+
+    const card = player.deck.shift();
+    if (card === undefined) {
+      return discardedCards;
+    }
+
+    player.discard.push(card);
+    discardedCards.push(card);
+  }
+
+  return discardedCards;
+}
+
+function createDinglerStatus(playerId: PlayerState["playerId"]): PlayerState["statuses"][number] {
+  return {
+    instanceId: `dingler-${playerId}`,
+    statusId: "dingler",
+    ownerId: playerId,
+    effects: [
+      {
+        effectId: "fixture_modify_effective_value",
+        timing: "whileControlled",
+        valueKind: "playerMaxLife",
+        operation: "add",
+        amount: -10,
+        target: {
+          targetType: "player",
+        },
+      },
+    ],
+  };
 }
 
 function drawTopDeckCard(player: PlayerState, state: GameState): CardInstance | undefined {

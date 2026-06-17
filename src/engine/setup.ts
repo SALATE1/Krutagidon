@@ -15,6 +15,7 @@ export interface CardInstance {
   instanceId: string;
   definitionId: string;
   ownerId: PlayerId | CommonOwner;
+  marketChips: number;
 }
 
 export interface TokenInstance {
@@ -83,6 +84,7 @@ export interface GameState {
   turn: {
     number: number;
     power: number;
+    activatedCardIds: string[];
   };
   players: PlayerState[];
   common: CommonState;
@@ -180,6 +182,7 @@ export function initializeGame(options: InitializeGameOptions): GameState {
     turn: {
       number: 1,
       power: 0,
+      activatedCardIds: [],
     },
     players,
     common,
@@ -317,6 +320,24 @@ function fillMarket(options: {
     }
 
     options.market.push(card);
+    applyMarketChipMarker(options.dataPack, options.market, definition);
+  }
+}
+
+function applyMarketChipMarker(
+  dataPack: LoadedDataPack,
+  market: CardInstance[],
+  addedDefinition: CardDefinition,
+): void {
+  if (!addedDefinition.engine.marketChipMarker) {
+    return;
+  }
+
+  for (const card of market) {
+    const definition = mustGetDefinition(dataPack, card.definitionId);
+    if (definition.engine.marketChipMarker) {
+      card.marketChips += 1;
+    }
   }
 }
 
@@ -367,6 +388,7 @@ function createInstanceFactory(): InstanceFactory {
         instanceId: `card-${nextId}`,
         definitionId,
         ownerId,
+        marketChips: 0,
       };
       nextId += 1;
       return instance;

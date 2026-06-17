@@ -247,6 +247,13 @@ function isSupportedExecutableEffectId(effectId: string, mode: "combat" | "fixtu
   return (
     effectId === "add_power" ||
     effectId === "heal" ||
+    effectId === "set_life" ||
+    effectId === "mega_mayhem_set_life" ||
+    effectId === "mega_mayhem_each_player_destroy_top_main_deck_death_if_mayhem" ||
+    effectId === "mega_mayhem_each_player_toggle_dingler" ||
+    effectId === "mayhem_each_player_discard_top_deck_cards_choose_destroy_all_or_none" ||
+    effectId === "mayhem_each_player_choose_discard_hand_draw_or_take_damage" ||
+    effectId === "mayhem_each_player_discard_deck_then_destroy_from_discard" ||
     effectId === "deal_damage" ||
     effectId === "attack_damage" ||
     effectId === "multi_target_attack" ||
@@ -258,6 +265,8 @@ function isSupportedExecutableEffectId(effectId: string, mode: "combat" | "fixtu
     effectId === "reveal_top_card" ||
     effectId === "play_top_card" ||
     effectId === "draw_cards" ||
+    effectId === "wild_magic_choice" ||
+    effectId === "play_top_card_from_foe_deck" ||
     (mode === "fixture" &&
       (effectId === "fixture_add_power_equal_to_target_cost" ||
         effectId === "fixture_modify_effective_value"))
@@ -280,6 +289,36 @@ function validateSupportedEffectShape(cardId: string, effectId: string, effect: 
     }
 
     return errors;
+  }
+
+  if (effectId === "wild_magic_choice") {
+    const options = effect["options"];
+    if (!Array.isArray(options)) {
+      return [`Card ${cardId} uses wild_magic_choice without options`];
+    }
+
+    const errors: string[] = [];
+    for (const option of options) {
+      if (!isEffectRecord(option)) {
+        errors.push(`Card ${cardId} uses invalid Wild Magic option`);
+        continue;
+      }
+
+      const optionEffectId = option["effectId"];
+      if (optionEffectId !== "add_power" && optionEffectId !== "play_top_card_from_foe_deck") {
+        errors.push(`Card ${cardId} uses unsupported Wild Magic option ${String(optionEffectId)}`);
+      }
+    }
+
+    return errors;
+  }
+
+  if (effectId === "play_top_card_from_foe_deck") {
+    if (effect["targetSelector"] !== "chosenFoe") {
+      return [`Card ${cardId} uses unsupported foe-deck target ${String(effect["targetSelector"])}`];
+    }
+
+    return [];
   }
 
   if (effectId === "deal_damage") {
@@ -309,6 +348,63 @@ function validateSupportedEffectShape(cardId: string, effectId: string, effect: 
     if (!isEffectRecord(target) || target["selector"] !== "activePlayer") {
       const selector = isEffectRecord(target) ? target["selector"] : target;
       errors.push(`Card ${cardId} uses unsupported healing target ${String(selector)}`);
+    }
+
+    return errors;
+  }
+
+  if (effectId === "set_life") {
+    const errors: string[] = [];
+    const lifeTotal = effect["lifeTotal"];
+    if (typeof lifeTotal !== "number" || !Number.isSafeInteger(lifeTotal) || lifeTotal < 1) {
+      errors.push(`Card ${cardId} uses invalid life total ${String(lifeTotal)}`);
+    }
+
+    const target = effect["target"];
+    const targetSelector = effect["targetSelector"];
+    if (
+      (!isEffectRecord(target) || target["selector"] !== "activePlayer") &&
+      targetSelector !== "eachPlayerClockwiseFromActive"
+    ) {
+      const selector = isEffectRecord(target) ? target["selector"] : targetSelector;
+      errors.push(`Card ${cardId} uses unsupported set-life target ${String(selector)}`);
+    }
+
+    return errors;
+  }
+
+  if (effectId === "mega_mayhem_set_life") {
+    const errors: string[] = [];
+    const lifeTotal = effect["lifeTotal"];
+    if (typeof lifeTotal !== "number" || !Number.isSafeInteger(lifeTotal) || lifeTotal < 1) {
+      errors.push(`Card ${cardId} uses invalid life total ${String(lifeTotal)}`);
+    }
+
+    if (effect["timing"] !== "onMayhemResolve") {
+      errors.push(`Card ${cardId} uses unsupported MegaMayhem timing ${String(effect["timing"])}`);
+    }
+
+    if (effect["targetSelector"] !== "eachPlayerClockwiseFromActive") {
+      errors.push(`Card ${cardId} uses unsupported MegaMayhem target ${String(effect["targetSelector"])}`);
+    }
+
+    return errors;
+  }
+
+  if (
+    effectId === "mega_mayhem_each_player_destroy_top_main_deck_death_if_mayhem" ||
+    effectId === "mega_mayhem_each_player_toggle_dingler" ||
+    effectId === "mayhem_each_player_discard_top_deck_cards_choose_destroy_all_or_none" ||
+    effectId === "mayhem_each_player_choose_discard_hand_draw_or_take_damage" ||
+    effectId === "mayhem_each_player_discard_deck_then_destroy_from_discard"
+  ) {
+    const errors: string[] = [];
+    if (effect["timing"] !== "onMayhemResolve") {
+      errors.push(`Card ${cardId} uses unsupported Mayhem timing ${String(effect["timing"])}`);
+    }
+
+    if (effect["targetSelector"] !== "eachPlayerClockwiseFromActive") {
+      errors.push(`Card ${cardId} uses unsupported Mayhem target ${String(effect["targetSelector"])}`);
     }
 
     return errors;

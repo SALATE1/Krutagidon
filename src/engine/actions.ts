@@ -1,9 +1,9 @@
 import type { CardDefinition } from "./data.js";
-import { executeOnPlayEffects } from "./effect-runtime.js";
+import { executeActivationEffects, executeMayhemEffects, executeOnPlayEffects } from "./effect-runtime.js";
 import { calculateEffectiveCardCost } from "./effective-values.js";
 import type { CardInstance, GameState, PlayerState } from "./setup.js";
 
-export type LegalAction = PlayCardAction | BuyMarketCardAction | EndTurnAction;
+export type LegalAction = PlayCardAction | BuyMarketCardAction | ActivatePermanentAction | EndTurnAction;
 export type GameAction = LegalAction;
 
 export interface PlayCardAction {
@@ -18,6 +18,11 @@ export interface BuyMarketCardAction {
 }
 
 export type BuySource = "mainMarket" | "legendMarket" | "wildMagicStack";
+
+export interface ActivatePermanentAction {
+  type: "activatePermanent";
+  cardInstanceId: string;
+}
 
 export interface EndTurnAction {
   type: "endTurn";
@@ -54,6 +59,12 @@ export function listLegalActions(state: GameState): LegalAction[] {
         source: "legendMarket" as const,
       })),
     ...getWildMagicBuyAction(state),
+    ...activePlayer.permanents
+      .filter((card) => canActivatePermanent(state, activePlayer, card))
+      .map((card) => ({
+        type: "activatePermanent" as const,
+        cardInstanceId: card.instanceId,
+      })),
     {
       type: "endTurn",
     },
@@ -66,6 +77,8 @@ export function applyAction(state: GameState, action: GameAction): ActionResult 
       return playCard(state, action.cardInstanceId);
     case "buyMarketCard":
       return buyMarketCard(state, action);
+    case "activatePermanent":
+      return activatePermanent(state, action.cardInstanceId);
     case "endTurn":
       return endTurn(state);
   }
@@ -75,8 +88,9 @@ function endTurn(state: GameState): ActionResult {
   const activePlayer = mustGetActivePlayer(state);
   grantBasicTrophyChipAtEndOfTurn(state, activePlayer);
   activePlayer.discard.push(...activePlayer.hand.splice(0));
-  activePlayer.discard.push(...activePlayer.playedThisTurn.splice(0));
+  cleanupPlayedCards(state, activePlayer);
   state.turn.power = 0;
+  state.turn.activatedCardIds = [];
   state.eventLog.push({
     type: "turnEnded",
     playerId: activePlayer.playerId,
@@ -85,10 +99,52 @@ function endTurn(state: GameState): ActionResult {
   drawCards(activePlayer, 5, state);
   state.turn.number += 1;
   state.activePlayerId = getNextPlayer(state, activePlayer).playerId;
-  refillMarkets(state);
+  const refillResult = refillMarkets(state);
+  if (!refillResult.ok) {
+    return refillResult;
+  }
   state.eventLog.push({
     type: "turnStarted",
     playerId: state.activePlayerId,
+  });
+
+  return { ok: true };
+}
+
+function activatePermanent(state: GameState, cardInstanceId: string): ActionResult {
+  const activePlayer = mustGetActivePlayer(state);
+  const card = activePlayer.permanents.find((card) => card.instanceId === cardInstanceId);
+  if (card === undefined) {
+    return {
+      ok: false,
+      error: "Card is not a controlled permanent",
+    };
+  }
+
+  if (!canActivatePermanent(state, activePlayer, card)) {
+    return {
+      ok: false,
+      error: "Permanent cannot be activated",
+    };
+  }
+
+  const definition = mustGetDefinition(state, card.definitionId);
+  const effectResult = executeActivationEffects(state, activePlayer, definition, {
+    sourceType: "card",
+    playerId: activePlayer.playerId,
+    cardInstanceId: card.instanceId,
+    definitionId: card.definitionId,
+  });
+  if (!effectResult.ok) {
+    return effectResult;
+  }
+
+  state.turn.activatedCardIds.push(card.instanceId);
+  state.eventLog.push({
+    type: "cardActivated",
+    playerId: activePlayer.playerId,
+    cardInstanceId: card.instanceId,
+    definitionId: card.definitionId,
   });
 
   return { ok: true };
@@ -140,6 +196,7 @@ function buyMarketCard(state: GameState, action: BuyMarketCardAction): ActionRes
   sourceZone.splice(cardIndex, 1);
   state.turn.power = payment.remainingPower;
   activePlayer.chips = payment.remainingChips;
+  gainMarketChipsFromCard(state, activePlayer, card);
   card.ownerId = activePlayer.playerId;
   activePlayer.discard.push(card);
   state.eventLog.push({
@@ -150,6 +207,13 @@ function buyMarketCard(state: GameState, action: BuyMarketCardAction): ActionRes
   });
 
   return { ok: true };
+}
+
+function cleanupPlayedCards(state: GameState, activePlayer: PlayerState): void {
+  for (const card of activePlayer.playedThisTurn.splice(0)) {
+    const owner = state.players.find((player) => player.playerId === card.ownerId);
+    (owner ?? activePlayer).discard.push(card);
+  }
 }
 
 function playCard(state: GameState, cardInstanceId: string): ActionResult {
@@ -206,6 +270,17 @@ function canAfford(state: GameState, player: PlayerState, card: CardInstance): b
 function canAffordWithChips(state: GameState, player: PlayerState, card: CardInstance): boolean {
   const definition = mustGetDefinition(state, card.definitionId);
   return calculateEffectiveCardCost(state, player.playerId, definition) <= state.turn.power + player.chips;
+}
+
+function canActivatePermanent(state: GameState, _player: PlayerState, card: CardInstance): boolean {
+  if (state.turn.activatedCardIds.includes(card.instanceId)) {
+    return false;
+  }
+
+  const definition = mustGetDefinition(state, card.definitionId);
+  return definition.engine.effects.some((effect) => {
+    return isEffectRecord(effect) && effect["timing"] === "activation";
+  });
 }
 
 function getWildMagicBuyAction(state: GameState): BuyMarketCardAction[] {
@@ -283,8 +358,8 @@ function drawCards(player: PlayerState, count: number, state: GameState): void {
   }
 }
 
-function refillMarkets(state: GameState): void {
-  fillMarket(state, {
+function refillMarkets(state: GameState): ActionResult {
+  const legendResult = fillMarket(state, {
     sourceDeck: state.common.legendDeck,
     market: state.common.legendMarket,
     destroyedEvents: state.common.destroyedMegaMayhem,
@@ -292,7 +367,11 @@ function refillMarkets(state: GameState): void {
     eventKind: "megaMayhem",
     eventLogType: "megaMayhemDestroyed",
   });
-  fillMarket(state, {
+  if (!legendResult.ok) {
+    return legendResult;
+  }
+
+  const mainResult = fillMarket(state, {
     sourceDeck: state.common.mainDeck,
     market: state.common.market,
     destroyedEvents: state.common.destroyedMayhem,
@@ -300,6 +379,11 @@ function refillMarkets(state: GameState): void {
     eventKind: "mayhem",
     eventLogType: "mayhemDestroyed",
   });
+  if (!mainResult.ok) {
+    return mainResult;
+  }
+
+  return { ok: true };
 }
 
 function fillMarket(
@@ -312,18 +396,23 @@ function fillMarket(
     eventKind: CardDefinition["engine"]["cardKind"];
     eventLogType: string;
   },
-): void {
+): ActionResult {
   while (options.market.length < options.targetSize) {
     const card = options.sourceDeck.shift();
     if (card === undefined) {
       state.eventLog.push({
         type: "marketRefillFailed",
       });
-      return;
+      return { ok: true };
     }
 
     const definition = mustGetDefinition(state, card.definitionId);
     if (definition.engine.cardKind === options.eventKind) {
+      const mayhemResult = executeMayhemCard(state, card, definition);
+      if (!mayhemResult.ok) {
+        return mayhemResult;
+      }
+
       options.destroyedEvents.push(card);
       state.eventLog.push({
         type: options.eventLogType,
@@ -339,7 +428,69 @@ function fillMarket(
       cardInstanceId: card.instanceId,
       definitionId: card.definitionId,
     });
+    applyMarketChipMarker(state, options.market, definition);
   }
+
+  return { ok: true };
+}
+
+function executeMayhemCard(state: GameState, card: CardInstance, definition: CardDefinition): ActionResult {
+  const activePlayer = mustGetActivePlayer(state);
+  const effectResult = executeMayhemEffects(state, activePlayer, definition, {
+    sourceType: "card",
+    playerId: activePlayer.playerId,
+    cardInstanceId: card.instanceId,
+    definitionId: card.definitionId,
+  });
+  if (!effectResult.ok) {
+    return effectResult;
+  }
+
+  state.eventLog.push({
+    type: "mayhemResolved",
+    playerId: activePlayer.playerId,
+    cardInstanceId: card.instanceId,
+    definitionId: card.definitionId,
+  });
+  return { ok: true };
+}
+
+function applyMarketChipMarker(state: GameState, market: CardInstance[], addedDefinition: CardDefinition): void {
+  if (!addedDefinition.engine.marketChipMarker) {
+    return;
+  }
+
+  for (const card of market) {
+    const definition = mustGetDefinition(state, card.definitionId);
+    if (!definition.engine.marketChipMarker) {
+      continue;
+    }
+
+    card.marketChips += 1;
+    state.eventLog.push({
+      type: "marketChipAdded",
+      cardInstanceId: card.instanceId,
+      definitionId: card.definitionId,
+      amount: 1,
+    });
+  }
+}
+
+function gainMarketChipsFromCard(state: GameState, player: PlayerState, card: CardInstance): void {
+  if (card.marketChips <= 0) {
+    return;
+  }
+
+  const amount = card.marketChips;
+  player.chips += amount;
+  card.marketChips = 0;
+  state.eventLog.push({
+    type: "marketChipsGained",
+    playerId: player.playerId,
+    cardInstanceId: card.instanceId,
+    definitionId: card.definitionId,
+    amount,
+  });
 }
 
 function getNextPlayer(state: GameState, player: PlayerState): PlayerState {
@@ -382,4 +533,8 @@ function mustGetDefinition(state: GameState, definitionId: string): CardDefiniti
   }
 
   return definition;
+}
+
+function isEffectRecord(effect: unknown): effect is Record<string, unknown> {
+  return typeof effect === "object" && effect !== null;
 }
