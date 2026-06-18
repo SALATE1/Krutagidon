@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: Done
 
 # Market Flow: беспредел при обновлении барахолки
 

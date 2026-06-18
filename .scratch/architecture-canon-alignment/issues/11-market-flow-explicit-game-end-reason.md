@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: Done
 
 # Market Flow: явная причина конца партии
 

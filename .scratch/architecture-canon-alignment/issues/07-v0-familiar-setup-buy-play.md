@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: Done
 
 # v0-фамильяр: setup -> покупка -> розыгрыш `+3 power`
 

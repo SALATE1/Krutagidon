@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: Done
 
 # Setup: ЖДК по канону
 

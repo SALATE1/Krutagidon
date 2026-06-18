@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: Done
 
 # Единый gain/buy movement с чипсами рынка
 

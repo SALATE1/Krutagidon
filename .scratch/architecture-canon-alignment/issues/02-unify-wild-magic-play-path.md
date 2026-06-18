@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: Done
 
 # Единый play path для Шальной магии
 
