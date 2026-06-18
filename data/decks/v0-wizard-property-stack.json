@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "stackId": "v0-wizard-property-draft-stack",
+  "stackId": "v0-wizard-property-stack",
   "runtimeSchema": "krutagidon.tokenStack.v0",
   "role": "wizardProperties",
-  "mappingStatus": "draft-v0",
+  "mappingStatus": "runtime-v0",
   "entries": [
     {
       "tokenId": "wizard-property-001",

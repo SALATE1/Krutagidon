@@ -192,6 +192,8 @@ export function validateExecutableDataPack(
   const errors: string[] = [];
   const mode = options.mode ?? "combat";
 
+  errors.push(...validateManifestRuntimePaths(dataPack.manifest));
+
   for (const definition of dataPack.cardDefinitions.values()) {
     if (!definition.engine.playableInV0) {
       continue;
@@ -270,6 +272,48 @@ export function validateExecutableDataPack(
   }
 
   return { ok: true };
+}
+
+function validateManifestRuntimePaths(manifest: DataPackManifest): string[] {
+  const errors: string[] = [];
+
+  for (const [fieldName, filePath] of collectManifestPaths(manifest)) {
+    const normalizedPath = filePath.replaceAll("\\", "/");
+    if (normalizedPath === "data/import" || normalizedPath.startsWith("data/import/")) {
+      errors.push(`Manifest ${fieldName} references import-only path ${filePath}`);
+    }
+  }
+
+  return errors;
+}
+
+function collectManifestPaths(manifest: DataPackManifest): [string, string][] {
+  const paths: [string, string][] = [
+    ["cardsPath", manifest.cardsPath],
+    ["decks.starterDeck", manifest.decks.starterDeck],
+    ["decks.mainDeck", manifest.decks.mainDeck],
+    ["decks.legendDeck", manifest.decks.legendDeck],
+    ["decks.wildMagicStack", manifest.decks.wildMagicStack],
+    ["decks.limpWandStack", manifest.decks.limpWandStack],
+  ];
+
+  if (manifest.tokensPath !== undefined) {
+    paths.push(["tokensPath", manifest.tokensPath]);
+  }
+
+  for (const [index, filePath] of (manifest.tokenDefinitionPaths ?? []).entries()) {
+    paths.push([`tokenDefinitionPaths[${index}]`, filePath]);
+  }
+
+  if (manifest.tokenStacks?.deadWizardTokens !== undefined) {
+    paths.push(["tokenStacks.deadWizardTokens", manifest.tokenStacks.deadWizardTokens]);
+  }
+
+  if (manifest.tokenStacks?.wizardProperties !== undefined) {
+    paths.push(["tokenStacks.wizardProperties", manifest.tokenStacks.wizardProperties]);
+  }
+
+  return paths;
 }
 
 function loadCardDefinitions(rootDir: string, cardsPath: string): ReadonlyMap<string, CardDefinition> {

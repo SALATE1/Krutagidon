@@ -6,7 +6,7 @@
   "cardsPath": "data/cards",
   "tokensPath": "data/tokens",
   "tokenDefinitionPaths": [
-    "data/import/wizard-property-drafts"
+    "data/tokens/wizard-properties"
   ],
   "decks": {
     "starterDeck": "data/decks/v0-starter-deck.json",
@@ -17,7 +17,7 @@
   },
   "tokenStacks": {
     "deadWizardTokens": "data/decks/v0-dead-wizard-token-stack.json",
-    "wizardProperties": "data/decks/v0-wizard-property-draft-stack.json"
+    "wizardProperties": "data/decks/v0-wizard-property-stack.json"
   },
   "counts": {
     "mapped": 39,

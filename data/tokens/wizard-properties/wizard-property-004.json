@@ -28,7 +28,9 @@
         "amount": -1,
         "target": {
           "targetType": "card",
-          "cardTypes": ["treasure"]
+          "cardTypes": [
+            "treasure"
+          ]
         }
       },
       {
@@ -39,7 +41,9 @@
         "amount": 1,
         "target": {
           "targetType": "card",
-          "cardTypes": ["treasure"]
+          "cardTypes": [
+            "treasure"
+          ]
         }
       }
     ],

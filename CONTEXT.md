@@ -16,9 +16,21 @@ _Avoid_: fake DWT, simulation DWT
 A unique description of a non-card game object such as a Dead Wizard Token, Trophy, Dingler status, or chip-related token behavior. Token definitions are separate from card definitions.
 _Avoid_: card definition for tokens, pseudo-card
 
+**Wizard Property Definition**:
+A token definition for a wizard property assigned during setup. Wizard properties are not card definitions, even when their effects refer to real cards.
+_Avoid_: wizard property card, property draft as runtime data
+
 **Token Kind**:
 The category of a token definition, such as `deadWizardToken`, `trophy`, or `dingler`, used to distinguish token lifecycles without modeling tokens as cards.
 _Avoid_: card kind for tokens
+
+**Import Data**:
+Raw or intermediate local card, token, OCR, or draft data used while preparing runtime definitions. Import data is not an engine input.
+_Avoid_: runtime import data, executable draft
+
+**Runtime Data**:
+Tracked engine-readable card and token definitions used by simulations. Runtime data contains explicit stable IDs and mapped effects instead of relying on OCR text or draft files.
+_Avoid_: raw import, card draft, OCR source
 
 **Effect Runtime**:
 The shared execution model for mapped effects from cards, tokens, statuses, and event-like objects. It uses one effect language regardless of the source object.

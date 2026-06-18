@@ -24,7 +24,9 @@
         "effectId": "topdeck_gained_card",
         "timing": "onGainCard",
         "optional": true,
-        "cardTypes": ["creature"]
+        "cardTypes": [
+          "creature"
+        ]
       }
     ],
     "unsupportedMechanics": []

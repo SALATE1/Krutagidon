@@ -390,6 +390,24 @@ test("draft wizard property tokens are not treated as executable", () => {
   assert.deepEqual(result, { ok: true });
 });
 
+test("executable data-pack validation rejects manifest references to import-only data", () => {
+  const dataPack = loadV0DataPack(rootDir);
+  const result = validateExecutableDataPack({
+    ...dataPack,
+    manifest: {
+      ...dataPack.manifest,
+      tokenDefinitionPaths: ["data/import/wizard-property-drafts"],
+    },
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(
+    result.errors.some((error) => {
+      return error.includes("tokenDefinitionPaths[0]") && error.includes("data/import/wizard-property-drafts");
+    }),
+  );
+});
+
 test("executable data-pack validation rejects unsupported play-top destinations", () => {
   const card = createFixtureCard("fixture-unsupported-play-top-destination");
   const dataPack = withFixtureCard({
