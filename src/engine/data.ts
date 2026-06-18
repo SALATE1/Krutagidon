@@ -340,6 +340,13 @@ function isSupportedExecutableEffectId(effectId: string, mode: "combat" | "fixtu
     effectId === "gain_chips" ||
     effectId === "topdeck_gained_card" ||
     effectId === "temporary_hand_limit_by_gained_card_type" ||
+    effectId === "replace_starting_card" ||
+    effectId === "start_with_basic_trophy" ||
+    effectId === "force_starting_player" ||
+    effectId === "set_starting_life_total" ||
+    effectId === "set_resurrection_life_total" ||
+    effectId === "modify_owned_wand_attack_damage" ||
+    effectId === "prevent_defense_against_owned_wand_attacks" ||
     (mode === "fixture" &&
       (effectId === "fixture_add_power_equal_to_target_cost" ||
         effectId === "fixture_modify_effective_value"))

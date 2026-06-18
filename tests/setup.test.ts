@@ -51,6 +51,8 @@ test("v0 data pack loads the wizard property setup pool", () => {
     "wizard-property-006",
     "wizard-property-007",
     "wizard-property-008",
+    "wizard-property-009",
+    "wizard-property-010",
   ]);
 
   assert.ok(wizardPropertyStack);
@@ -62,6 +64,16 @@ test("v0 data pack loads the wizard property setup pool", () => {
     assert.equal(definition?.kind, "wizardProperty");
     assert.equal(definition.engine?.playableInV0, executableWizardProperties.has(entry.tokenId));
   }
+});
+
+test("familiar-selection wizard property remains non-executable until familiar lifecycle exists", () => {
+  const dataPack = loadV0DataPack(rootDir);
+  const definition = dataPack.tokenDefinitions.get("wizard-property-003");
+
+  assert.equal(definition?.kind, "wizardProperty");
+  assert.equal(definition.engine?.playableInV0, false);
+  assert.deepEqual(definition.engine?.effects, []);
+  assert.ok(definition.engine?.unsupportedMechanics.includes("wizard-property-setup-familiar-selection"));
 });
 
 test("starter deck definitions are independent physical instances per player", () => {
@@ -78,6 +90,42 @@ test("starter deck definitions are independent physical instances per player", (
   assert.equal(firstPlayerIds.size, 10);
   assert.equal(secondPlayerIds.size, 10);
   assert.deepEqual(intersection(firstPlayerIds, secondPlayerIds), []);
+});
+
+test("wizard property setup replaces exactly one owned starter Sign with Hrenalocka Wand", () => {
+  const state = initializeGame({ rootDir, seed: 777, playerCount: 9 });
+  const propertyOwner = state.players.find((player) => {
+    return player.wizardProperties.some((property) => property.definitionId === "wizard-property-009");
+  });
+  assert.ok(propertyOwner);
+
+  const ownerStarterCards = ownedCards(state, propertyOwner.playerId);
+  assert.equal(countDefinition(ownerStarterCards, "esw2_dbg__ocr_022"), 5);
+  assert.equal(countDefinition(ownerStarterCards, "krutagidon_wizard_property_009_hrenalocka_wand"), 1);
+
+  for (const otherPlayer of state.players.filter((player) => player.playerId !== propertyOwner.playerId)) {
+    const otherStarterCards = ownedCards(state, otherPlayer.playerId);
+    assert.equal(countDefinition(otherStarterCards, "esw2_dbg__ocr_022"), 6);
+    assert.equal(countDefinition(otherStarterCards, "krutagidon_wizard_property_009_hrenalocka_wand"), 0);
+  }
+});
+
+test("wizard property setup grants Basic Trophy, first turn, and starting life override", () => {
+  const state = initializeGame({ rootDir, seed: 777, playerCount: 10 });
+  const propertyOwner = state.players.find((player) => {
+    return player.wizardProperties.some((property) => property.definitionId === "wizard-property-010");
+  });
+  assert.ok(propertyOwner);
+
+  assert.equal(state.activePlayerId, propertyOwner.playerId);
+  assert.equal(propertyOwner.life.current, 25);
+  assert.equal(propertyOwner.life.max, 25);
+  assert.ok(propertyOwner.trophyLikeObjects.some((trophy) => trophy.trophyId === "basicTrophy"));
+
+  for (const otherPlayer of state.players.filter((player) => player.playerId !== propertyOwner.playerId)) {
+    assert.equal(otherPlayer.life.current, 20);
+    assert.equal(otherPlayer.trophyLikeObjects.some((trophy) => trophy.trophyId === "basicTrophy"), false);
+  }
 });
 
 function snapshot(state: GameState): unknown {
@@ -122,7 +170,7 @@ function tokenSnapshot(tokens: GameState["players"][number]["wizardProperties"])
   }));
 }
 
-function ownedCards(state: GameState, ownerId: "player-1" | "player-2"): CardInstance[] {
+function ownedCards(state: GameState, ownerId: GameState["players"][number]["playerId"]): CardInstance[] {
   const player = state.players.find((candidate) => candidate.playerId === ownerId);
   assert.ok(player);
   return [...player.deck, ...player.hand, ...player.discard, ...player.playedThisTurn, ...player.permanents];

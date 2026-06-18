@@ -139,6 +139,7 @@ export function initializeGame(options: InitializeGameOptions): GameState {
 
   const players = createPlayers(playerCount, dataPack, factory, rng);
   assignStartingWizardProperties(players, dataPack, tokenFactory);
+  applyWizardPropertySetupEffects(players, dataPack, factory);
   const mainDeck = instantiateDeck(dataPack.decks.mainDeck, dataPack, factory, "common");
   const legendDeck = instantiateDeck(dataPack.decks.legendDeck, dataPack, factory, "common");
   shuffleInPlace(mainDeck, rng);
@@ -173,10 +174,11 @@ export function initializeGame(options: InitializeGameOptions): GameState {
     dataPack,
   });
 
-  const activePlayer = players[rng.nextInt(players.length)];
-  if (activePlayer === undefined) {
+  const randomActivePlayer = players[rng.nextInt(players.length)];
+  if (randomActivePlayer === undefined) {
     throw new Error("Cannot select active player from an empty player list");
   }
+  const activePlayer = getForcedStartingPlayer(players, dataPack) ?? randomActivePlayer;
 
   return {
     seed: options.seed,
@@ -246,6 +248,115 @@ function assignStartingWizardProperties(
       ownerId: player.playerId,
     });
   }
+}
+
+function applyWizardPropertySetupEffects(
+  players: PlayerState[],
+  dataPack: LoadedDataPack,
+  factory: InstanceFactory,
+): void {
+  for (const player of players) {
+    for (const property of player.wizardProperties) {
+      const definition = dataPack.tokenDefinitions.get(property.definitionId);
+      if (definition?.kind !== "wizardProperty" || definition.engine === undefined || !definition.engine.playableInV0) {
+        continue;
+      }
+
+      for (const effect of definition.engine.effects) {
+        if (!isSetupEffect(effect)) {
+          continue;
+        }
+
+        applyWizardPropertySetupEffect(player, dataPack, factory, effect);
+      }
+    }
+  }
+}
+
+function isSetupEffect(effect: unknown): effect is Record<string, unknown> {
+  if (typeof effect !== "object" || effect === null || Array.isArray(effect)) {
+    return false;
+  }
+
+  const record = effect as Record<string, unknown>;
+  return record["timing"] === "setup";
+}
+
+function applyWizardPropertySetupEffect(
+  player: PlayerState,
+  dataPack: LoadedDataPack,
+  factory: InstanceFactory,
+  effect: Record<string, unknown>,
+): void {
+  if (effect["effectId"] === "replace_starting_card") {
+    replaceStartingCard(player, dataPack, factory, effect);
+    return;
+  }
+
+  if (effect["effectId"] === "start_with_basic_trophy") {
+    if (!player.trophyLikeObjects.some((trophy) => trophy.trophyId === "basicTrophy")) {
+      player.trophyLikeObjects.push({
+        instanceId: `setup-basic-trophy-${player.playerId}`,
+        trophyId: "basicTrophy",
+        ownerId: player.playerId,
+        effects: [],
+      });
+    }
+    return;
+  }
+
+  if (effect["effectId"] === "set_starting_life_total") {
+    const lifeTotal = effect["lifeTotal"];
+    if (typeof lifeTotal !== "number" || !Number.isSafeInteger(lifeTotal) || lifeTotal < 1) {
+      throw new Error(`Invalid setup life total ${String(lifeTotal)}`);
+    }
+
+    player.life.current = lifeTotal;
+    player.life.max = Math.max(player.life.max, lifeTotal);
+  }
+}
+
+function replaceStartingCard(
+  player: PlayerState,
+  dataPack: LoadedDataPack,
+  factory: InstanceFactory,
+  effect: Record<string, unknown>,
+): void {
+  const fromDefinitionId = effect["fromDefinitionId"];
+  const toDefinitionId = effect["toDefinitionId"];
+  if (typeof fromDefinitionId !== "string" || typeof toDefinitionId !== "string") {
+    throw new Error("replace_starting_card requires stable fromDefinitionId and toDefinitionId");
+  }
+
+  mustGetDefinition(dataPack, toDefinitionId);
+
+  const zones = [player.hand, player.deck, player.discard, player.playedThisTurn, player.permanents];
+  for (const zone of zones) {
+    const cardIndex = zone.findIndex((card) => card.ownerId === player.playerId && card.definitionId === fromDefinitionId);
+    if (cardIndex < 0) {
+      continue;
+    }
+
+    zone.splice(cardIndex, 1, factory.create(toDefinitionId, player.playerId));
+    return;
+  }
+
+  throw new Error(`Cannot replace missing starting card ${fromDefinitionId} for ${player.playerId}`);
+}
+
+function getForcedStartingPlayer(players: PlayerState[], dataPack: LoadedDataPack): PlayerState | undefined {
+  return players.find((player) => {
+    return player.wizardProperties.some((property) => {
+      const definition = dataPack.tokenDefinitions.get(property.definitionId);
+      if (definition?.kind !== "wizardProperty" || definition.engine === undefined || !definition.engine.playableInV0) {
+        return false;
+      }
+
+      return definition.engine.effects.some((effect) => {
+        return isSetupEffect(effect) && effect["effectId"] === "force_starting_player";
+      });
+    });
+  });
 }
 
 function createPlayers(

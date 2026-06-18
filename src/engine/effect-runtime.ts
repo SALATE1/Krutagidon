@@ -761,18 +761,20 @@ function executeEffect(
       };
     }
 
+    const attackProfile = getWizardPropertyAttackProfile(state, source);
+    const attackAmount = amount + attackProfile.damageBonus;
     state.eventLog.push({
       type: "attackCreated",
       playerId: player.playerId,
       cardInstanceId: source.cardInstanceId,
       definitionId: source.definitionId,
       effectId: "attack_damage",
-      amount,
+      amount: attackAmount,
       sourceType: source.sourceType,
     });
 
     for (const targetPlayer of getOpponentsInSeatingOrder(state, player)) {
-      resolveAttackTarget(state, player, targetPlayer, amount, "attack_damage", source);
+      resolveAttackTarget(state, player, targetPlayer, attackAmount, "attack_damage", source, attackProfile.unavoidable);
     }
 
     return { ok: true };
@@ -805,6 +807,8 @@ function executeEffect(
 
     const effectId = asString(effect["effectId"]);
     const targetPlayer = targetResult.choice.player;
+    const attackProfile = getWizardPropertyAttackProfile(state, source);
+    const attackAmount = amount + attackProfile.damageBonus;
     state.eventLog.push({
       type: "attackCreated",
       playerId: player.playerId,
@@ -812,10 +816,10 @@ function executeEffect(
       cardInstanceId: source.cardInstanceId,
       definitionId: source.definitionId,
       effectId,
-      amount,
+      amount: attackAmount,
       sourceType: source.sourceType,
     });
-    if (resolveDefenseWindow(state, targetPlayer)) {
+    if (!attackProfile.unavoidable && resolveDefenseWindow(state, targetPlayer)) {
       state.eventLog.push({
         type: "attackAvoided",
         playerId: targetPlayer.playerId,
@@ -828,7 +832,7 @@ function executeEffect(
       return { ok: true };
     }
 
-    dealDamage(state, player, targetPlayer, amount, effectId, source);
+    dealDamage(state, player, targetPlayer, attackAmount, effectId, source);
 
     return { ok: true };
   }
@@ -851,18 +855,20 @@ function executeEffect(
       };
     }
 
+    const attackProfile = getWizardPropertyAttackProfile(state, source);
+    const attackAmount = amount + attackProfile.damageBonus;
     state.eventLog.push({
       type: "attackCreated",
       playerId: player.playerId,
       cardInstanceId: source.cardInstanceId,
       definitionId: source.definitionId,
       effectId: "multi_target_attack",
-      amount,
+      amount: attackAmount,
       sourceType: source.sourceType,
     });
 
     for (const targetPlayer of getOpponentsInSeatingOrder(state, player)) {
-      resolveAttackTarget(state, player, targetPlayer, amount, "multi_target_attack", source);
+      resolveAttackTarget(state, player, targetPlayer, attackAmount, "multi_target_attack", source, attackProfile.unavoidable);
     }
 
     return { ok: true };
@@ -1180,6 +1186,80 @@ function effectConditionMatches(state: GameState, player: PlayerState, effect: R
   return matchingCount >= minimumCount;
 }
 
+function getWizardPropertyAttackProfile(
+  state: GameState,
+  source: EffectSourceContext,
+): { damageBonus: number; unavoidable: boolean } {
+  if (source.sourceType !== "card") {
+    return { damageBonus: 0, unavoidable: false };
+  }
+
+  const sourceCard = findCardInstance(state, source.cardInstanceId);
+  if (sourceCard === undefined || sourceCard.ownerId === "common") {
+    return { damageBonus: 0, unavoidable: false };
+  }
+
+  const owner = state.players.find((player) => player.playerId === sourceCard.ownerId);
+  if (owner === undefined) {
+    return { damageBonus: 0, unavoidable: false };
+  }
+
+  let damageBonus = 0;
+  let unavoidable = false;
+  for (const token of owner.wizardProperties) {
+    const definition = state.tokenDefinitions.get(token.definitionId);
+    if (definition?.kind !== "wizardProperty" || definition.engine === undefined || !definition.engine.playableInV0) {
+      continue;
+    }
+
+    for (const effect of definition.engine.effects) {
+      if (!isEffectRecord(effect) || effect["timing"] !== "attackReplacement" || !effectMatchesCardDefinition(effect, source.definitionId)) {
+        continue;
+      }
+
+      if (effect["effectId"] === "modify_owned_wand_attack_damage") {
+        const amount = effect["amount"];
+        if (typeof amount === "number" && Number.isSafeInteger(amount)) {
+          damageBonus += amount;
+        }
+      }
+
+      if (effect["effectId"] === "prevent_defense_against_owned_wand_attacks") {
+        unavoidable = true;
+      }
+    }
+  }
+
+  return { damageBonus, unavoidable };
+}
+
+function effectMatchesCardDefinition(effect: Record<string, unknown>, definitionId: string): boolean {
+  const cardDefinitionIds = effect["cardDefinitionIds"];
+  return Array.isArray(cardDefinitionIds) && cardDefinitionIds.some((candidate) => candidate === definitionId);
+}
+
+function findCardInstance(state: GameState, cardInstanceId: string): CardInstance | undefined {
+  for (const player of state.players) {
+    const card = [...player.hand, ...player.deck, ...player.discard, ...player.playedThisTurn, ...player.permanents].find(
+      (candidate) => candidate.instanceId === cardInstanceId,
+    );
+    if (card !== undefined) {
+      return card;
+    }
+  }
+
+  return [
+    ...state.common.market,
+    ...state.common.legendMarket,
+    ...state.common.mainDeck,
+    ...state.common.legendDeck,
+    ...state.common.wildMagicStack,
+    ...state.common.limpWandStack,
+    ...state.common.destroyedMayhem,
+    ...state.common.destroyedMegaMayhem,
+  ].find((candidate) => candidate.instanceId === cardInstanceId);
+}
+
 function resolveAttackTarget(
   state: GameState,
   attackingPlayer: PlayerState,
@@ -1187,6 +1267,7 @@ function resolveAttackTarget(
   amount: number,
   effectId: string,
   source: EffectSourceContext,
+  unavoidable = false,
 ): void {
   state.eventLog.push({
     type: "attackTargetStarted",
@@ -1199,7 +1280,7 @@ function resolveAttackTarget(
     sourceType: source.sourceType,
   });
 
-  if (resolveDefenseWindow(state, targetPlayer)) {
+  if (!unavoidable && resolveDefenseWindow(state, targetPlayer)) {
     state.eventLog.push({
       type: "attackAvoided",
       playerId: targetPlayer.playerId,
@@ -1573,12 +1654,44 @@ function resolvePlayerDeath(
     }
   }
 
-  player.life.current = 20;
+  const resurrectionLifeTotal = getResurrectionLifeTotal(state, player);
+  player.life.current = resurrectionLifeTotal;
   state.eventLog.push({
     type: "playerResurrected",
     playerId: player.playerId,
-    amount: 20,
+    amount: resurrectionLifeTotal,
   });
+}
+
+function getResurrectionLifeTotal(state: GameState, player: PlayerState): number {
+  for (const token of player.wizardProperties) {
+    const definition = state.tokenDefinitions.get(token.definitionId);
+    if (definition?.kind !== "wizardProperty" || definition.engine === undefined || !definition.engine.playableInV0) {
+      continue;
+    }
+
+    for (const effect of definition.engine.effects) {
+      if (
+        !isEffectRecord(effect) ||
+        effect["effectId"] !== "set_resurrection_life_total" ||
+        effect["timing"] !== "replacement"
+      ) {
+        continue;
+      }
+
+      const unlessStatusId = effect["unlessStatusId"];
+      if (typeof unlessStatusId === "string" && player.statuses.some((status) => status.statusId === unlessStatusId)) {
+        continue;
+      }
+
+      const lifeTotal = effect["lifeTotal"];
+      if (typeof lifeTotal === "number" && Number.isSafeInteger(lifeTotal) && lifeTotal > 0) {
+        return lifeTotal;
+      }
+    }
+  }
+
+  return 20;
 }
 
 function awardBasicTrophyForKill(

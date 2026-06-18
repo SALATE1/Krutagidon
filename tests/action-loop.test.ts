@@ -1003,6 +1003,62 @@ test("deal_damage can kill an opponent, give a neutral DWT, resurrect, and affec
   assert.equal(targetScore.victoryPoints, expectedCardScore + expectedTokenScore);
 });
 
+test("wizard property resurrection life override respects loser-status exception", () => {
+  const state = initializeGame({ rootDir, seed: 60615 });
+  const activePlayer = state.players.find((player) => player.playerId === state.activePlayerId);
+  assert.ok(activePlayer);
+  const propertyOwner = state.players.find((player) => player.playerId !== activePlayer.playerId);
+  assert.ok(propertyOwner);
+  propertyOwner.wizardProperties = [
+    {
+      instanceId: "fixture-wizard-property-010",
+      definitionId: "wizard-property-010",
+      ownerId: propertyOwner.playerId,
+    },
+  ];
+  propertyOwner.life.current = 1;
+  const fixtureCardId = addFixtureCardToActiveHand(state, {
+    effectId: "deal_damage",
+    timing: "onPlay",
+    amount: 1,
+    target: {
+      selector: "opponentPlayer",
+    },
+  });
+
+  const result = applyAction(state, {
+    type: "playCard",
+    cardInstanceId: fixtureCardId,
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(propertyOwner.life.current, 25);
+
+  propertyOwner.statuses.push({
+    instanceId: "fixture-loser-status",
+    statusId: "loser",
+    ownerId: propertyOwner.playerId,
+    effects: [],
+  });
+  propertyOwner.life.current = 1;
+  const secondFixtureCardId = addFixtureCardToActiveHand(state, {
+    effectId: "deal_damage",
+    timing: "onPlay",
+    amount: 1,
+    target: {
+      selector: "opponentPlayer",
+    },
+  });
+
+  const secondResult = applyAction(state, {
+    type: "playCard",
+    cardInstanceId: secondFixtureCardId,
+  });
+
+  assert.equal(secondResult.ok, true);
+  assert.equal(propertyOwner.life.current, 20);
+});
+
 test("heal uses effective max life and logs clamping without mutating base max life", () => {
   const state = initializeGame({ rootDir, seed: 60615 });
   const activePlayer = state.players.find((player) => player.playerId === state.activePlayerId);
@@ -1158,6 +1214,75 @@ test("attack_damage damages the first opponent when no defense is available", ()
       return event.type === "effectDamageDealt" && event.targetPlayerId === targetPlayer.playerId && event.amount === 4;
     }),
   );
+});
+
+test("wizard property owned wand attacks gain damage and cannot be avoided", () => {
+  const state = initializeGame({ rootDir, seed: 60615, playerCount: 9 });
+  const propertyOwner = state.players.find((player) => {
+    return player.wizardProperties.some((property) => property.definitionId === "wizard-property-009");
+  });
+  assert.ok(propertyOwner);
+  const targetPlayer = state.players.find((player) => player.playerId !== propertyOwner.playerId);
+  assert.ok(targetPlayer);
+  state.activePlayerId = propertyOwner.playerId;
+  const wand = findOwnedCard(propertyOwner, "krutagidon_wizard_property_009_hrenalocka_wand");
+  assert.ok(wand);
+  moveCardToHand(propertyOwner, wand);
+  const defenseCard = addFixtureDefenseCardToHand(state, targetPlayer, "discardSelf");
+
+  const result = applyAction(state, {
+    type: "playCard",
+    cardInstanceId: wand.instanceId,
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(targetPlayer.life.current, 18);
+  assert.equal(targetPlayer.hand.includes(defenseCard), true);
+  assert.equal(state.eventLog.some((event) => event.type === "defenseChoiceSelected"), false);
+});
+
+test("wizard property does not affect borrowed wands or non-wand attacks", () => {
+  const state = initializeGame({ rootDir, seed: 60615, playerCount: 9 });
+  const propertyOwner = state.players.find((player) => {
+    return player.wizardProperties.some((property) => property.definitionId === "wizard-property-009");
+  });
+  assert.ok(propertyOwner);
+  const targetPlayer = state.players.find((player) => player.playerId !== propertyOwner.playerId);
+  assert.ok(targetPlayer);
+  state.activePlayerId = propertyOwner.playerId;
+  const borrowedWand = findOwnedCard(propertyOwner, "krutagidon_wizard_property_009_hrenalocka_wand");
+  assert.ok(borrowedWand);
+  borrowedWand.ownerId = targetPlayer.playerId;
+  moveCardToHand(propertyOwner, borrowedWand);
+  const borrowedWandDefense = addFixtureDefenseCardToHand(state, targetPlayer, "discardSelf");
+
+  const borrowedWandResult = applyAction(state, {
+    type: "playCard",
+    cardInstanceId: borrowedWand.instanceId,
+  });
+
+  assert.equal(borrowedWandResult.ok, true);
+  assert.equal(targetPlayer.life.current, 20);
+  assert.equal(targetPlayer.discard.includes(borrowedWandDefense), true);
+
+  state.activePlayerId = propertyOwner.playerId;
+  targetPlayer.life.current = 20;
+  const nonWandCardId = addFixtureCardToActiveHand(state, {
+    effectId: "attack_damage",
+    timing: "onPlay",
+    amount: 1,
+    targetSelector: "chosenFoe",
+  });
+  const nonWandDefense = addFixtureDefenseCardToHand(state, targetPlayer, "discardSelf");
+
+  const nonWandResult = applyAction(state, {
+    type: "playCard",
+    cardInstanceId: nonWandCardId,
+  });
+
+  assert.equal(nonWandResult.ok, true);
+  assert.equal(targetPlayer.life.current, 20);
+  assert.equal(targetPlayer.discard.includes(nonWandDefense), true);
 });
 
 test("attack_damage kill awards Basic Trophy to the attacker", () => {
@@ -1885,6 +2010,23 @@ function addFixtureCardToActiveHand(
   });
 
   return cardInstanceId;
+}
+
+function findOwnedCard(player: PlayerState, definitionId: string): CardInstance | undefined {
+  return [...player.hand, ...player.deck, ...player.discard, ...player.playedThisTurn, ...player.permanents].find((card) => {
+    return card.definitionId === definitionId;
+  });
+}
+
+function moveCardToHand(player: PlayerState, card: CardInstance): void {
+  for (const zone of [player.hand, player.deck, player.discard, player.playedThisTurn, player.permanents]) {
+    const cardIndex = zone.findIndex((candidate) => candidate.instanceId === card.instanceId);
+    if (cardIndex >= 0) {
+      zone.splice(cardIndex, 1);
+    }
+  }
+
+  player.hand.push(card);
 }
 
 function createFixtureCardDefinition(
