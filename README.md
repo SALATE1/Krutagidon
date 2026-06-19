@@ -193,6 +193,12 @@ npm run
 npm run typecheck
 ```
 
+Проверить draft JSON импорта:
+
+```powershell
+npm run validate:drafts
+```
+
 Запустить тесты:
 
 ```powershell

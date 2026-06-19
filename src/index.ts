@@ -14,6 +14,16 @@ export type {
 } from "./engine/data.js";
 export { loadV0DataPack, validateExecutableDataPack } from "./engine/data.js";
 export type {
+  DraftValidationMessage,
+  DraftValidationResult,
+  ValidateCardDraftOptions,
+} from "./import/draft-validation.js";
+export {
+  formatDraftValidationResult,
+  validateCardDraft,
+  validateDraftFiles,
+} from "./import/draft-validation.js";
+export type {
   CardInstance,
   CommonState,
   GameState,
