@@ -84,7 +84,7 @@ Source: pp. 4, 6, 8.
 | `deck` | Facedown personal deck. Shuffle discard into deck only when a card must be drawn, played, discarded, or revealed from an empty deck. | `executable` | pp. 11, 20 |
 | `hand` | Cards available for play, discard, defense, and reveal-by-effect. End of turn discards all remaining hand cards. | `executable` | pp. 8-11 |
 | `discard` | Public pile for purchased, gained, discarded, and most played cards unless mapped effect/component data changes the destination. | `executable` | pp. 8-9, 11-12 |
-| `playedThisTurn` | Non-Ongoing cards played and controlled by this player during the current turn. It can temporarily contain cards owned by another player if an effect plays them under this player's control. Default cleanup destination is the card owner's discard unless play context or mapped data changes it. | `executable` | pp. 9, 11-12 |
+| `playedThisTurn` | Non-Ongoing cards being played or already played and controlled by this player during the current turn. It can temporarily contain cards owned by another player if an effect plays them under this player's control. Default cleanup destination is the card owner's discard unless play context or mapped data changes it. | `executable` | pp. 9, 11-12 |
 | `permanents` | Ongoing objects in the player's persistent controlled zone, including cards or non-card components whose rule makes them Ongoing. They remain in play until an effect moves/removes them. | `executable` | pp. 11, 14 |
 | `deadWizardTokens` | Controlled DWTs in `deadWizardTokens`. Count for scoring and may have immediate, Ongoing, end-game, or other token-data effects. | `executable`; faces are `data-required` | pp. 14, 18 |
 | `chips` | Player's chip count. Bounded by the modeled token supply if supply is finite. | `executable` | p. 15 |
@@ -94,6 +94,9 @@ Ownership/control rules:
 
 - Each `CardInstance` is in exactly one zone at a time.
 - Control is not a zone. It is represented by current controller. A player controls cards/objects whose current `controller` is that player.
+- A card becomes controlled by a player when it enters play for resolution, before its mapped play effects finish resolving.
+- Non-Ongoing cards in play are normally controlled only during the controller's active turn while they remain in `playedThisTurn`.
+- Persistent controlled objects, such as Ongoing cards, trophy, DWTs, statuses, and setup tokens, can remain controlled outside their controller's active turn.
 - Normally, cards in a player's `playedThisTurn` and `permanents` are controlled by that player.
 - Hand, deck, discard, and market cards are not controlled.
 - Control is separate from ownership: a player owns cards they bought or gained, regardless of current zone.
@@ -177,6 +180,7 @@ Play context:
 
 - Playing a card creates a temporary play context with at least `card`, `owner`, `controller`, `sourceZone`, and destination data for after play resolution or end-of-turn cleanup.
 - The play context is not a zone. The card itself still moves to exactly one zone: `playedThisTurn` for non-Ongoing cards or `permanents` for Ongoing cards.
+- After that move, the card is controlled while its play effects are still resolving.
 - Moving an Ongoing card to `permanents` completes that play. Later attacks, activations, or Ongoing effects from that card are uses/effects of a controlled card, not playing the card again.
 - Context decides where the card moves after resolution or cleanup. Zones do not infer ownership or destination by themselves.
 - A card can be played from hand by a player action or from another specified source by an effect. The source changes the play context, not the core play procedure.
@@ -194,7 +198,8 @@ Play context:
 Dual attack/defense cards:
 
 - If played by the active player on their turn, resolve the card's normal play/onPlay effects: power, draw, attack, and any other mapped play effects. The defense branch does not resolve.
-- If used by an attacked target as a defense, resolve only the defense branch. This can happen on any player's turn, including the defending player's own turn if they legally attacked themselves. Normal play/onPlay effects such as power, draw, or attack do not resolve.
+- If used by an attacked target as a defense, resolve only the defense branch. This can happen on any player's turn, including the defending player's own turn if they legally attacked themselves. The defense card is not played, does not enter `playedThisTurn` or `permanents`, and is not controlled unless mapped data explicitly moves it into play. Normal play/onPlay effects such as power, draw, or attack do not resolve.
+- If the defense branch says to discard the defense card to avoid the attack, the card moves to discard and is not under any player's control while it is there.
 - If a defense use does not discard the card, it can still be played later on its controller's turn; that later play resolves the normal play/onPlay effects and not the defense branch.
 
 Source: p. 11.

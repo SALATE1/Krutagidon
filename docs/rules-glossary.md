@@ -43,7 +43,7 @@ Primary source: `Pravila_Krutagidon_2.pdf`. English correspondences are included
 | вялая палочка | `limpWand` | Limp Wand | Card kind/type for the stack-gained junk card, -1 VP. It has no main card type. | RU p. 13; EN p. 14 |
 | Постоянка | `ongoing` | ONGOING | Card/object attribute that makes it stay in play under control, usually in `permanents`. | RU p. 11; EN p. 12 |
 | атака | `attack` | ATTACK | Avoidable hostile effect. | RU p. 10; EN p. 10 |
-| защита | `defense` | DEFENSE | One defense use/card per attack instance per defending player. If one card creates several attacks, each attack is defended separately. Mapped defense branch controls whether that card remains available for later attacks. | RU p. 10; EN p. 10 |
+| защита | `defense` | DEFENSE | One defense use/card per attack instance per defending player. A defense card used from hand is not played and is not controlled unless mapped data explicitly moves it into play. If one card creates several attacks, each attack is defended separately. Mapped defense branch controls whether that card remains available for later attacks. | RU p. 10; EN p. 10 |
 | перенаправить атаку | `redirectAttack` | redirect attack | Defense effect branch that makes the attacker suffer the defended attack effect. | RU p. 17 |
 | символ активации | `activate` | Activate | Card property: the before-activation part resolves on play; the activation part can be used once per turn while the card is controlled. | RU pp. 8, 16; EN p. 17 |
 | символ чипсины | `marketChipMarker` | XTREME Nacho Chips | Card property that moves chips onto matching market cards; chips can reduce purchases of cards of `карта легенды`. | RU p. 15; EN p. 16 |
@@ -64,7 +64,7 @@ Primary source: `Pravila_Krutagidon_2.pdf`. English correspondences are included
 | самый могучий / самый хилый | `strongestTarget` / `weakestTarget` | strongest/weakest | Selects by current life; ties are resolved by the player applying the effect, or by the active player for беспредел/мегабеспредел. | RU pp. 10, 13 |
 | могучее тебя / хилее тебя | `strongerThanYou` / `weakerThanYou` | stronger/weaker than you | Strict life comparison; equal life does not qualify. | RU p. 10 |
 | колдун(ы) | `oneOrMorePlayers` | player(s) | Mayhem wording that can target one or more tied players by the named parameter. | RU p. 11 |
-| под контролем | `control` | control | Current controller relationship, not a zone. Usually cards in `playedThisTurn`, Ongoing objects in `permanents`, and controlled tokens/objects. Excludes hand, deck, discard, and markets; separate from ownership. | RU p. 12; EN p. 13 |
+| под контролем | `control` | control | Current controller relationship, not a zone. A card is controlled once it has entered play for resolution, including while it is still being played. Usually represented by cards in `playedThisTurn`, Ongoing objects in `permanents`, and controlled tokens/objects. Excludes hand, deck, discard, markets, and defense cards used from hand; separate from ownership. | RU p. 12; EN p. 13 |
 | владеть | `own` | own | Bought or gained cards, regardless of current zone. | RU p. 12; EN p. 13 |
 | подохнуть | `die` | die | Life below 1; gain DWT and reset life. | RU p. 14; EN p. 15 |
 | накручивать жизни | `heal` | heal | Gain life; max 25 unless Dingler max 15 applies. | RU p. 16; EN p. 17 |

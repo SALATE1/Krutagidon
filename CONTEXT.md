@@ -53,7 +53,7 @@ A context-specific value calculated from immutable base data plus active modifie
 _Avoid_: modified card cost, rewritten card data
 
 **Controlled Object**:
-A card, token, status, or trophy-like object currently controlled by a player. Ongoing modifiers are derived from controlled objects instead of being copied into a separate player modifier list.
+A card, token, status, or trophy-like object currently controlled by a player, including a card that has entered play and is still resolving. A defense card used from hand is not a controlled object unless an effect explicitly moves it into play. Ongoing modifiers are derived from controlled objects instead of being copied into a separate player modifier list.
 _Avoid_: detached player modifier
 
 **Controlled Object View**:
