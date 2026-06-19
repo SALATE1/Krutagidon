@@ -245,7 +245,7 @@ data/
 docs/
   rules-canon.md
   simulation-scope.md
-  card-json-guide.md
+  import-pipeline.md
 src/
   cli/        console runners
   engine/     deterministic simulation engine
@@ -269,7 +269,7 @@ tests/        node:test coverage for engine behavior
 
 - `docs/rules-canon.md` - технический канон правил для engine implementation.
 - `docs/simulation-scope.md` - scope симуляции и v0-границы.
-- `docs/card-json-guide.md` - справочник для OCR -> JSON и базовой типизации карт.
+- `docs/import-pipeline.md` - справочник для `.md -> draft JSON -> runtime JSON` импорта.
 - `docs/rules-glossary.md` - глоссарий терминов.
 - `docs/rules-open-questions.md` - неоднозначности и открытые вопросы.
 - `.scratch/krutagidon-simulation-platform/PRD.md` - PRD для разработки симулятора и пайплайна данных.
@@ -318,16 +318,16 @@ tests/        node:test coverage for engine behavior
 
 `cardId` не должен зависеть от OCR-названия карты. Русское название хранится отдельно как видимое поле.
 
-## Импорт карт
+## Импорт данных
 
-Полный импорт карт идет отдельным пайплайном:
+Полный импорт карт, свойств волшебников и жетонов мертвого волшебника идет отдельным пайплайном. Подробности: `docs/import-pipeline.md`.
 
-1. Пользователь добавляет изображения карт в `assets/cards/raw/*.{webp,png,jpg,jpeg}`.
-2. OCR agent создает `data/import/card-texts/<card-id>.md`.
-3. Card JSON agent создает `data/import/card-drafts/<card-id>.json`.
-4. Engine Mapping agent создает финальные runtime-поля для `data/cards/<card-id>.json`.
+1. Пользователь добавляет изображения в `assets/**/raw/*.{webp,png,jpg,jpeg}`.
+2. OCR/source extraction создает markdown в `data/import/**/*-texts/*.md`.
+3. Draft JSON agent создает неисполняемый draft JSON в `data/import/**/*-drafts/*.json`.
+4. Engine Mapping agent создает runtime JSON в `data/cards/`, `data/tokens/` или `data/decks/`.
 
-Runtime engine читает mapped JSON data. Он не должен читать OCR markdown и не должен парсить natural-language card text во время партии.
+Runtime engine читает mapped JSON data. Он не должен читать OCR markdown, draft JSON или парсить natural-language text во время партии.
 
 ## Ближайшие направления
 
