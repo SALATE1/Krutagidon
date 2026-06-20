@@ -82,6 +82,14 @@ function formatEvent(event: GameEvent, options: FormatSingleGameDebugTraceOption
     return `- Market chips from ${formatCard(event, options)}: ${event.playerId} gains +${event.amount ?? 0} chips.`;
   }
 
+  if (event.type === "cardMoved") {
+    const ownerDelta =
+      event.ownerBefore === undefined || event.ownerAfter === undefined
+        ? ""
+        : `, owner ${event.ownerBefore} -> ${event.ownerAfter}`;
+    return `- Move: ${formatCard(event, options)} ${formatZone(event.sourceZone)} -> ${formatZone(event.destinationZone)}${ownerDelta}.`;
+  }
+
   if (event.type === "cardPlayed") {
     return `- Played ${formatCard(event, options)}.`;
   }
@@ -141,6 +149,48 @@ function formatCard(event: GameEvent, options: FormatSingleGameDebugTraceOptions
   }
 
   return `${label} (${event.cardInstanceId})`;
+}
+
+function formatZone(zone: string | undefined): string {
+  if (zone === undefined) {
+    return "<unknown-zone>";
+  }
+
+  if (zone === "mainMarket") {
+    return "main market";
+  }
+
+  if (zone === "legendMarket") {
+    return "legend market";
+  }
+
+  const playerZone = zone.match(/^(player-\d+)\.(.+)$/);
+  if (playerZone === null) {
+    return zone;
+  }
+
+  const [, playerId, zoneName] = playerZone;
+  if (playerId === undefined || zoneName === undefined) {
+    return zone;
+  }
+
+  return `${playerId} ${formatPlayerZoneName(zoneName)}`;
+}
+
+function formatPlayerZoneName(zoneName: string): string {
+  if (zoneName === "playedThisTurn") {
+    return "played this turn";
+  }
+
+  if (zoneName === "deckTop") {
+    return "deck top";
+  }
+
+  if (zoneName === "unboughtFamiliar") {
+    return "unbought familiar";
+  }
+
+  return zoneName;
 }
 
 function formatTargetCard(event: GameEvent, options: FormatSingleGameDebugTraceOptions): string {

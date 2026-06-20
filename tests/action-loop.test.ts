@@ -40,6 +40,19 @@ test("active player can play a card from hand through the action loop", () => {
   assert.equal(activePlayer.hand.includes(playableCard), false);
   assert.equal(activePlayer.playedThisTurn.includes(playableCard), true);
   assert.equal(state.turn.power, 1);
+  assert.ok(
+    state.eventLog.some((event) => {
+      return (
+        event.type === "cardMoved" &&
+        event.playerId === activePlayer.playerId &&
+        event.cardInstanceId === playableCard.instanceId &&
+        event.sourceZone === `${activePlayer.playerId}.hand` &&
+        event.destinationZone === `${activePlayer.playerId}.playedThisTurn` &&
+        event.ownerBefore === activePlayer.playerId &&
+        event.ownerAfter === activePlayer.playerId
+      );
+    }),
+  );
   assert.equal(state.eventLog.at(-1)?.type, "cardPlayed");
 });
 
@@ -1167,6 +1180,20 @@ test("discard_card moves the first legal hand card into the active player's disc
       );
     }),
   );
+  assert.ok(
+    state.eventLog.some((event) => {
+      return (
+        event.type === "cardMoved" &&
+        event.playerId === activePlayer.playerId &&
+        event.cardInstanceId === discardedCard.instanceId &&
+        event.sourceZone === `${activePlayer.playerId}.hand` &&
+        event.destinationZone === `${activePlayer.playerId}.discard` &&
+        event.ownerBefore === activePlayer.playerId &&
+        event.ownerAfter === activePlayer.playerId &&
+        event.effectId === "discard_card"
+      );
+    }),
+  );
 });
 
 test("destroy_card moves a normal card to the destroyed zone and preserves ownership", () => {
@@ -1203,6 +1230,20 @@ test("destroy_card moves a normal card to the destroyed zone and preserves owner
         event.effectId === "destroy_card" &&
         event.targetCardInstanceId === destroyedCard.instanceId &&
         event.targetDefinitionId === destroyedCard.definitionId
+      );
+    }),
+  );
+  assert.ok(
+    state.eventLog.some((event) => {
+      return (
+        event.type === "cardMoved" &&
+        event.playerId === activePlayer.playerId &&
+        event.cardInstanceId === destroyedCard.instanceId &&
+        event.sourceZone === `${activePlayer.playerId}.hand` &&
+        event.destinationZone === "destroyedPile" &&
+        event.ownerBefore === activePlayer.playerId &&
+        event.ownerAfter === activePlayer.playerId &&
+        event.effectId === "destroy_card"
       );
     }),
   );
@@ -2858,6 +2899,19 @@ function assertGainedMovementGuarantees(
         event.amount === 2 &&
         event.chipsBefore === 0 &&
         event.chipsAfter === 2
+      );
+    }),
+  );
+  assert.ok(
+    state.eventLog.some((event) => {
+      return (
+        event.type === "cardMoved" &&
+        event.playerId === player.playerId &&
+        event.cardInstanceId === card.instanceId &&
+        event.sourceZone === "mainMarket" &&
+        event.destinationZone === `${player.playerId}.deckTop` &&
+        event.ownerBefore === "common" &&
+        event.ownerAfter === player.playerId
       );
     }),
   );

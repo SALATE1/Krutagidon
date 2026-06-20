@@ -47,6 +47,16 @@ test("single-game debug trace summarizes card play and effect resolution in game
         chipsAfter: 3,
       },
       {
+        type: "cardMoved",
+        playerId: "player-1",
+        cardInstanceId: "card-10",
+        definitionId: "fixture-moved-card",
+        sourceZone: "mainMarket",
+        destinationZone: "player-1.discard",
+        ownerBefore: "common",
+        ownerAfter: "player-1",
+      },
+      {
         type: "cardPlayed",
         playerId: "player-1",
         cardInstanceId: "card-7",
@@ -61,6 +71,7 @@ test("single-game debug trace summarizes card play and effect resolution in game
         ["fixture-power-card", "Мощный тестовый посох"],
         ["fixture-chip-card", "Чиповый тестовый посох"],
         ["fixture-market-card", "Рыночная карта"],
+        ["fixture-moved-card", "Купленная карта"],
       ]),
     }),
     [
@@ -74,6 +85,7 @@ test("single-game debug trace summarizes card play and effect resolution in game
       "- Effect add_power from Мощный тестовый посох (card-7): player-1 power 0 -> 2.",
       "- Effect gain_chips from Чиповый тестовый посох (card-8): player-1 chips 0 -> 1.",
       "- Market chips from Рыночная карта (card-9): player-1 chips 1 -> 3.",
+      "- Move: Купленная карта (card-10) main market -> player-1 discard, owner common -> player-1.",
       "- Played Мощный тестовый посох (card-7).",
       "",
       "Missing instrumentation",

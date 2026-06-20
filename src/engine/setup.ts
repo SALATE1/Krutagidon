@@ -108,6 +108,10 @@ export interface GameEvent {
   powerAfter?: number;
   chipsBefore?: number;
   chipsAfter?: number;
+  sourceZone?: string;
+  destinationZone?: string;
+  ownerBefore?: PlayerId | CommonOwner;
+  ownerAfter?: PlayerId | CommonOwner;
   cardInstanceId?: string;
   definitionId?: string;
   targetCardInstanceId?: string;

@@ -1,6 +1,6 @@
 import type { CardDefinition, TokenDefinition } from "./data.js";
 import { calculateEffectivePlayerMaxLife } from "./effective-values.js";
-import { recordEffectChipsChanged, recordMarketChipsGained } from "./event-recorder.js";
+import { recordCardMoved, recordEffectChipsChanged, recordMarketChipsGained } from "./event-recorder.js";
 import {
   getEffectRuntimeHandler,
   type EffectExecutionResult,
@@ -102,6 +102,8 @@ export function moveGainedCardToPlayerDestination(
     };
   }
 
+  const sourceZone = getCardZoneName(state, card) ?? "unknown";
+  const ownerBefore = card.ownerId;
   if (!removeCardFromKnownZones(state, card)) {
     return {
       ok: false,
@@ -161,6 +163,12 @@ export function moveGainedCardToPlayerDestination(
   } else {
     player.discard.push(card);
   }
+  recordCardMoved(state, player, card, {
+    sourceZone,
+    destinationZone: destination === "deckTop" ? `${player.playerId}.deckTop` : `${player.playerId}.discard`,
+    ownerBefore,
+    ownerAfter: card.ownerId,
+  });
 
   return { ok: true, destination };
 }
@@ -780,7 +788,17 @@ function executeEffect(
           return destination;
         }
 
-        if (!moveCardToZonePreservingOwner(state, discardedCard, destination.zone)) {
+        if (
+          !moveCardToZonePreservingOwner(
+            state,
+            targetPlayer,
+            discardedCard,
+            destination.zone,
+            destination.zoneName,
+            asString(effect["effectId"]),
+            source,
+          )
+        ) {
           return {
             ok: false,
             error: `Cannot destroy discarded card ${discardedCard.instanceId}`,
@@ -830,7 +848,17 @@ function executeEffect(
           return destination;
         }
 
-        if (!moveCardToZonePreservingOwner(state, destroyTarget, destination.zone)) {
+        if (
+          !moveCardToZonePreservingOwner(
+            state,
+            targetPlayer,
+            destroyTarget,
+            destination.zone,
+            destination.zoneName,
+            asString(effect["effectId"]),
+            source,
+          )
+        ) {
           return {
             ok: false,
             error: `Cannot destroy discarded card ${destroyTarget.instanceId}`,
@@ -1826,7 +1854,12 @@ function moveCardToPlayerZone(
   card: CardInstance,
   player: PlayerState,
   destination: CardInstance[],
+  destinationZone: string,
+  effectId: string,
+  source: EffectSourceContext,
 ): boolean {
+  const sourceZone = getCardZoneName(state, card) ?? "unknown";
+  const ownerBefore = card.ownerId;
   if (!removeCardFromKnownZones(state, card)) {
     return false;
   }
@@ -1834,6 +1867,14 @@ function moveCardToPlayerZone(
   moveMarketChipsToPlayer(state, player, card);
   card.ownerId = player.playerId;
   destination.push(card);
+  recordCardMoved(state, player, card, {
+    sourceZone,
+    destinationZone,
+    ownerBefore,
+    ownerAfter: card.ownerId,
+    effectId,
+    sourceType: source.sourceType,
+  });
   return true;
 }
 
@@ -1849,19 +1890,37 @@ function moveMarketChipsToPlayer(state: GameState, player: PlayerState, card: Ca
   recordMarketChipsGained(state, player, card, chipsBefore, player.chips);
 }
 
-function moveCardToZonePreservingOwner(state: GameState, card: CardInstance, destination: CardInstance[]): boolean {
+function moveCardToZonePreservingOwner(
+  state: GameState,
+  player: PlayerState,
+  card: CardInstance,
+  destination: CardInstance[],
+  destinationZone: string,
+  effectId: string,
+  source: EffectSourceContext,
+): boolean {
+  const sourceZone = getCardZoneName(state, card) ?? "unknown";
+  const ownerBefore = card.ownerId;
   if (!removeCardFromKnownZones(state, card)) {
     return false;
   }
 
   destination.push(card);
+  recordCardMoved(state, player, card, {
+    sourceZone,
+    destinationZone,
+    ownerBefore,
+    ownerAfter: card.ownerId,
+    effectId,
+    sourceType: source.sourceType,
+  });
   return true;
 }
 
 function getDestroyDestination(
   state: GameState,
   card: CardInstance,
-): { ok: true; zone: CardInstance[] } | { ok: false; error: string } {
+): { ok: true; zone: CardInstance[]; zoneName: string } | { ok: false; error: string } {
   const definition = state.cardDefinitions.get(card.definitionId);
   if (definition === undefined) {
     return {
@@ -1871,22 +1930,56 @@ function getDestroyDestination(
   }
 
   if (definition.engine.cardKind === "wildMagic") {
-    return { ok: true, zone: state.common.wildMagicStack };
+    return { ok: true, zone: state.common.wildMagicStack, zoneName: "wildMagicStack" };
   }
 
   if (definition.engine.cardKind === "limpWand") {
-    return { ok: true, zone: state.common.limpWandStack };
+    return { ok: true, zone: state.common.limpWandStack, zoneName: "limpWandStack" };
   }
 
   if (definition.engine.cardKind === "megaMayhem") {
-    return { ok: true, zone: state.common.destroyedMegaMayhem };
+    return { ok: true, zone: state.common.destroyedMegaMayhem, zoneName: "destroyedMegaMayhem" };
   }
 
   if (definition.engine.cardKind === "mayhem") {
-    return { ok: true, zone: state.common.destroyedMayhem };
+    return { ok: true, zone: state.common.destroyedMayhem, zoneName: "destroyedMayhem" };
   }
 
-  return { ok: true, zone: state.common.destroyedPile };
+  return { ok: true, zone: state.common.destroyedPile, zoneName: "destroyedPile" };
+}
+
+function getCardZoneName(state: GameState, card: CardInstance): string | undefined {
+  for (const player of state.players) {
+    if (player.unboughtFamiliar?.instanceId === card.instanceId) {
+      return `${player.playerId}.unboughtFamiliar`;
+    }
+
+    const playerZones: Array<[string, CardInstance[]]> = [
+      [`${player.playerId}.deck`, player.deck],
+      [`${player.playerId}.hand`, player.hand],
+      [`${player.playerId}.discard`, player.discard],
+      [`${player.playerId}.playedThisTurn`, player.playedThisTurn],
+      [`${player.playerId}.permanents`, player.permanents],
+    ];
+    for (const [zoneName, zone] of playerZones) {
+      if (zone.some((candidate) => candidate.instanceId === card.instanceId)) {
+        return zoneName;
+      }
+    }
+  }
+
+  const commonZones: Array<[string, CardInstance[]]> = [
+    ["mainMarket", state.common.market],
+    ["legendMarket", state.common.legendMarket],
+    ["mainDeck", state.common.mainDeck],
+    ["legendDeck", state.common.legendDeck],
+    ["wildMagicStack", state.common.wildMagicStack],
+    ["limpWandStack", state.common.limpWandStack],
+    ["destroyedPile", state.common.destroyedPile],
+    ["destroyedMayhem", state.common.destroyedMayhem],
+    ["destroyedMegaMayhem", state.common.destroyedMegaMayhem],
+  ];
+  return commonZones.find(([, zone]) => zone.some((candidate) => candidate.instanceId === card.instanceId))?.[0];
 }
 
 function removeCardFromKnownZones(state: GameState, card: CardInstance): boolean {

@@ -73,6 +73,33 @@ export function recordMarketChipsGained(
   });
 }
 
+export function recordCardMoved(
+  state: GameState,
+  player: PlayerState,
+  card: CardInstance,
+  movement: {
+    sourceZone: string;
+    destinationZone: string;
+    ownerBefore: CardInstance["ownerId"];
+    ownerAfter: CardInstance["ownerId"];
+    effectId?: string;
+    sourceType?: string;
+  },
+): void {
+  state.eventLog.push({
+    type: "cardMoved",
+    playerId: player.playerId,
+    cardInstanceId: card.instanceId,
+    definitionId: card.definitionId,
+    sourceZone: movement.sourceZone,
+    destinationZone: movement.destinationZone,
+    ownerBefore: movement.ownerBefore,
+    ownerAfter: movement.ownerAfter,
+    ...(movement.effectId === undefined ? {} : { effectId: movement.effectId }),
+    ...(movement.sourceType === undefined ? {} : { sourceType: movement.sourceType }),
+  });
+}
+
 function getActionIdentity(action: GameAction): string {
   if (action.type === "buyMarketCard") {
     return `${action.type}:${action.source}`;

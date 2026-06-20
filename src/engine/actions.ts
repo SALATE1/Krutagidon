@@ -8,6 +8,7 @@ import {
   moveGainedCardToPlayerDestination,
 } from "./effect-runtime.js";
 import { calculateEffectiveCardCost } from "./effective-values.js";
+import { recordCardMoved } from "./event-recorder.js";
 import { runMarketFlow, type MarketFlowEndReason } from "./market-flow.js";
 import type { CardInstance, GameState, PlayerState, TokenInstance } from "./setup.js";
 
@@ -309,11 +310,21 @@ function playCard(state: GameState, cardInstanceId: string): ActionResult {
 
   activePlayer.hand.splice(cardIndex, 1);
   const definition = mustGetDefinition(state, card.definitionId);
+  const ownerBefore = card.ownerId;
+  let destinationZone: string;
   if (definition.engine.isOngoing) {
     activePlayer.permanents.push(card);
+    destinationZone = `${activePlayer.playerId}.permanents`;
   } else {
     activePlayer.playedThisTurn.push(card);
+    destinationZone = `${activePlayer.playerId}.playedThisTurn`;
   }
+  recordCardMoved(state, activePlayer, card, {
+    sourceZone: `${activePlayer.playerId}.hand`,
+    destinationZone,
+    ownerBefore,
+    ownerAfter: card.ownerId,
+  });
 
   const effectResult = executeOnPlayEffects(state, activePlayer, definition, {
     sourceType: "card",

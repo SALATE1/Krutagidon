@@ -56,9 +56,28 @@ export interface EffectRuntimeServices {
     player: PlayerState,
     card: CardInstance,
   ): { ok: true; destination: "discard" | "deckTop" } | { ok: false; error: string };
-  moveCardToPlayerZone(state: GameState, card: CardInstance, player: PlayerState, destination: CardInstance[]): boolean;
-  moveCardToZonePreservingOwner(state: GameState, card: CardInstance, destination: CardInstance[]): boolean;
-  getDestroyDestination(state: GameState, card: CardInstance): { ok: true; zone: CardInstance[] } | { ok: false; error: string };
+  moveCardToPlayerZone(
+    state: GameState,
+    card: CardInstance,
+    player: PlayerState,
+    destination: CardInstance[],
+    destinationZone: string,
+    effectId: string,
+    source: EffectSourceContext,
+  ): boolean;
+  moveCardToZonePreservingOwner(
+    state: GameState,
+    player: PlayerState,
+    card: CardInstance,
+    destination: CardInstance[],
+    destinationZone: string,
+    effectId: string,
+    source: EffectSourceContext,
+  ): boolean;
+  getDestroyDestination(
+    state: GameState,
+    card: CardInstance,
+  ): { ok: true; zone: CardInstance[]; zoneName: string } | { ok: false; error: string };
   getOpponentsInSeatingOrder(state: GameState, player: PlayerState): PlayerState[];
   getWizardPropertyAttackProfile(
     state: GameState,
@@ -214,7 +233,15 @@ const discardCardHandler: EffectRuntimeHandler = {
       return choice;
     }
 
-    const moved = services.moveCardToPlayerZone(state, choice.card, player, player.discard);
+    const moved = services.moveCardToPlayerZone(
+      state,
+      choice.card,
+      player,
+      player.discard,
+      `${player.playerId}.discard`,
+      effectId,
+      source,
+    );
     if (!moved) {
       return {
         ok: false,
@@ -263,7 +290,15 @@ const destroyCardHandler: EffectRuntimeHandler = {
       return destination;
     }
 
-    const moved = services.moveCardToZonePreservingOwner(state, choice.card, destination.zone);
+    const moved = services.moveCardToZonePreservingOwner(
+      state,
+      player,
+      choice.card,
+      destination.zone,
+      destination.zoneName,
+      effectId,
+      source,
+    );
     if (!moved) {
       return {
         ok: false,
