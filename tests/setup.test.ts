@@ -1,7 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { initializeGame, loadV0DataPack, scoreGame, type CardInstance, type GameState } from "../src/index.js";
+import {
+  initializeGame,
+  loadV0DataPack,
+  scoreGame,
+  type CardInstance,
+  type GameState,
+  type LoadedDataPack,
+} from "../src/index.js";
 
 const rootDir = process.cwd();
 
@@ -137,20 +144,14 @@ test("starter deck definitions are independent physical instances per player", (
 });
 
 test("wizard property setup replaces exactly one owned starter Sign with Hrenalocka Wand", () => {
-  const state = initializeGame({ rootDir, seed: 777, playerCount: 9 });
-  const propertyOwner = state.players.find((player) => {
-    return player.wizardProperties.some((property) => property.definitionId === "esw2_dbg__wizard_property_009");
-  });
-  assert.ok(propertyOwner);
+  const dataPack = createWizardPropertySetupDataPack(loadV0DataPack(rootDir), "esw2_dbg__wizard_property_009");
+  const state = initializeGame({ dataPack, seed: 777 });
 
-  const ownerStarterCards = ownedCards(state, propertyOwner.playerId);
-  assert.equal(countDefinition(ownerStarterCards, "esw2_dbg__ocr_022"), 5);
-  assert.equal(countDefinition(ownerStarterCards, "krutagidon_wizard_property_009_hrenalocka_wand"), 1);
-
-  for (const otherPlayer of state.players.filter((player) => player.playerId !== propertyOwner.playerId)) {
-    const otherStarterCards = ownedCards(state, otherPlayer.playerId);
-    assert.equal(countDefinition(otherStarterCards, "esw2_dbg__ocr_022"), 6);
-    assert.equal(countDefinition(otherStarterCards, "krutagidon_wizard_property_009_hrenalocka_wand"), 0);
+  for (const player of state.players) {
+    assert.equal(player.wizardProperties[0]?.definitionId, "esw2_dbg__wizard_property_009");
+    const starterCards = ownedCards(state, player.playerId);
+    assert.equal(countDefinition(starterCards, "esw2_dbg__ocr_022"), 5);
+    assert.equal(countDefinition(starterCards, "krutagidon_wizard_property_009_hrenalocka_wand"), 1);
   }
 });
 
@@ -231,6 +232,23 @@ function ownedCards(state: GameState, ownerId: GameState["players"][number]["pla
 
 function countDefinition(cards: CardInstance[], definitionId: string): number {
   return cards.filter((card) => card.definitionId === definitionId).length;
+}
+
+function createWizardPropertySetupDataPack(dataPack: LoadedDataPack, tokenId: string): LoadedDataPack {
+  return {
+    ...dataPack,
+    tokenStacks: {
+      ...dataPack.tokenStacks,
+      wizardProperties: {
+        schemaVersion: 1,
+        stackId: "fixture-wizard-property-setup-stack",
+        runtimeSchema: "krutagidon.tokenStack.v0",
+        role: "wizardProperties",
+        mappingStatus: "fixture",
+        entries: [{ tokenId, count: 2 }],
+      },
+    },
+  };
 }
 
 function intersection(first: Set<string>, second: Set<string>): string[] {
