@@ -17,6 +17,15 @@ const singletonImportIds = new Map([
   ["esw2_dbg__wild_magic", "wild_magic"],
   ["esw2_dbg__limp_wand", "limp_wand"],
 ]);
+const defaultDraftInputPaths = [
+  "data/import/cards/main/drafts",
+  "data/import/cards/legend/drafts",
+  "data/import/cards/starter/drafts",
+  "data/import/cards/familiar/drafts",
+  "data/import/cards/special/drafts",
+  "data/import/tokens/wizard-property/drafts",
+  "data/import/tokens/dead-wizard-token/drafts",
+];
 
 export interface DraftValidationMessage {
   filePath: string;
@@ -182,7 +191,7 @@ export function validateDeadWizardTokenDraft(draft: unknown, options: ValidateDr
 
 export function validateDraftFiles(
   rootDir: string,
-  inputPaths = ["data/import/card-drafts", "data/import/wizard-property-drafts", "data/import/dead-wizard-token-drafts"],
+  inputPaths = defaultDraftInputPaths,
 ): DraftValidationResult {
   const errors: DraftValidationMessage[] = [];
   const warnings: DraftValidationMessage[] = [];

@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "cardId": "esw2_dbg__ocr_006",
   "source": {
-    "draft": "data/import/card-drafts/esw2_dbg__ocr_006.json",
-    "image": "assets/cards/raw/1000009112.jpg",
-    "ocrText": "data/import/card-texts/esw2_dbg__ocr_006.md"
+    "draft": "data/import/cards/main/drafts/esw2_dbg__ocr_006.json",
+    "image": "assets/cards/1000009112.jpg",
+    "text": "data/import/cards/main/texts/esw2_dbg__ocr_006.md"
   },
   "visible": {
     "nameRu": "Волшебные отходы",
@@ -40,9 +40,7 @@
         "effectId": "activation_destroy_self_then_destroy_own_cards",
         "chooser": "controller",
         "activationLimit": "oncePerTurnWhileControlled",
-        "sourceZones": [
-          "hand"
-        ],
+        "sourceZones": "hand",
         "timing": "activation",
         "maxAmount": 2,
         "destroySelf": true,

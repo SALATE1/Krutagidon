@@ -169,13 +169,16 @@ test("draft validation formatter reports runtime mapping readiness", () => {
       ...createValidCardDraft(),
       engine: {},
     },
-    { filePath: "data/import/card-drafts/example.json" },
+    { filePath: "data/import/cards/main/drafts/example.json" },
   );
 
   const output = formatDraftValidationResult(validation);
 
   assert.match(output, /Draft validation: 1 file\(s\)/);
-  assert.match(output, /ERROR data\/import\/card-drafts\/example\.json: draft contains forbidden runtime field 'engine'/);
+  assert.match(
+    output,
+    /ERROR data\/import\/cards\/main\/drafts\/example\.json: draft contains forbidden runtime field 'engine'/,
+  );
   assert.match(output, /Not ready for runtime mapping: 1 error\(s\), 0 warning\(s\)/);
 });
 
@@ -261,9 +264,9 @@ test("deadWizardTokenDraft reports uncertainty and missing source image as warni
 
 test("draft file validation includes dead wizard token drafts by default", () => {
   const rootDir = mkdtempSync(path.join(tmpdir(), "krutagidon-draft-validation-"));
-  mkdirSync(path.join(rootDir, "data", "import", "dead-wizard-token-drafts"), { recursive: true });
+  mkdirSync(path.join(rootDir, "data", "import", "tokens", "dead-wizard-token", "drafts"), { recursive: true });
   writeFileSync(
-    path.join(rootDir, "data", "import", "dead-wizard-token-drafts", "dwt-001.json"),
+    path.join(rootDir, "data", "import", "tokens", "dead-wizard-token", "drafts", "dwt-001.json"),
     JSON.stringify(createValidDeadWizardTokenDraft()),
     "utf8",
   );
@@ -311,8 +314,8 @@ function createValidCardDraft() {
     draftKind: "cardDraft",
     cardId: "esw2_dbg__main_001",
     source: {
-      image: "assets/cards/raw/example.jpg",
-      text: "data/import/card-texts/esw2_dbg__main_001.md",
+      image: "assets/cards/spell/example.jpg",
+      text: "data/import/cards/main/texts/esw2_dbg__main_001.md",
     },
     visible: {
       nameRu: "Тестовая карта",
@@ -336,8 +339,8 @@ function createValidWizardPropertyDraft() {
     tokenId: "esw2_dbg__wizard_property_001",
     kind: "wizardProperty",
     source: {
-      image: "assets/wizard-property/raw/Свойство 1.jpg",
-      text: "data/import/wizard-property-texts/wp_001.md",
+      image: "assets/wizard-property/Свойство 1.jpg",
+      text: "data/import/tokens/wizard-property/texts/esw2_dbg__wizard_property_001.md",
     },
     visible: {
       sourceLabel: "Свойство 1",
@@ -355,8 +358,8 @@ function createValidDeadWizardTokenDraft() {
     tokenId: "esw2_dbg__dead_wizard_token_001",
     kind: "deadWizardToken",
     source: {
-      image: "assets/DWT/raw/example.jpg",
-      text: "data/import/DWT-texts/esw2_dbg__dead_wizard_token_001.md",
+      image: "assets/dead-wizard-token/example.jpg",
+      text: "data/import/tokens/dead-wizard-token/texts/esw2_dbg__dead_wizard_token_001.md",
     },
     visible: {
       sourceLabel: "Жетон мертвого волшебника 1",

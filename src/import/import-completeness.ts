@@ -27,31 +27,43 @@ export interface ImportCompletenessReport {
 
 interface ImportAreaConfig {
   label: string;
-  rawDir: string;
-  draftDir: string;
-  runtimeDir: string;
+  rawDirs: string[];
+  draftDirs: string[];
+  runtimeDirs: string[];
   runtimeKind?: string;
 }
 
 const importAreas: ImportAreaConfig[] = [
   {
     label: "cards",
-    rawDir: "data/import/card-texts",
-    draftDir: "data/import/card-drafts",
-    runtimeDir: "data/cards",
+    rawDirs: [
+      "data/import/cards/main/texts",
+      "data/import/cards/legend/texts",
+      "data/import/cards/starter/texts",
+      "data/import/cards/familiar/texts",
+      "data/import/cards/special/texts",
+    ],
+    draftDirs: [
+      "data/import/cards/main/drafts",
+      "data/import/cards/legend/drafts",
+      "data/import/cards/starter/drafts",
+      "data/import/cards/familiar/drafts",
+      "data/import/cards/special/drafts",
+    ],
+    runtimeDirs: ["data/cards"],
   },
   {
     label: "wizard properties",
-    rawDir: "data/import/wizard-property-texts",
-    draftDir: "data/import/wizard-property-drafts",
-    runtimeDir: "data/tokens",
+    rawDirs: ["data/import/tokens/wizard-property/texts"],
+    draftDirs: ["data/import/tokens/wizard-property/drafts"],
+    runtimeDirs: ["data/tokens"],
     runtimeKind: "wizardProperty",
   },
   {
     label: "dead wizard tokens",
-    rawDir: "data/import/DWT-texts",
-    draftDir: "data/import/dead-wizard-token-drafts",
-    runtimeDir: "data/tokens",
+    rawDirs: ["data/import/tokens/dead-wizard-token/texts"],
+    draftDirs: ["data/import/tokens/dead-wizard-token/drafts"],
+    runtimeDirs: ["data/tokens"],
     runtimeKind: "deadWizardToken",
   },
 ];
@@ -84,9 +96,9 @@ export function formatImportCompletenessReport(report: ImportCompletenessReport)
 }
 
 function createAreaReport(rootDir: string, area: ImportAreaConfig): ImportCompletenessAreaReport {
-  const rawIds = collectIdsFromFiles(rootDir, area.rawDir, ".md");
-  const draftFiles = collectFiles(rootDir, area.draftDir, ".json");
-  const runtimeIds = collectRuntimeIds(rootDir, area.runtimeDir, area.runtimeKind);
+  const rawIds = collectIdsFromFiles(rootDir, area.rawDirs, ".md");
+  const draftFiles = collectFiles(rootDir, area.draftDirs, ".json");
+  const runtimeIds = collectRuntimeIds(rootDir, area.runtimeDirs, area.runtimeKind);
   const draftIds = new Set<string>();
   const validDraftIds = new Set<string>();
   let errorCount = 0;
@@ -133,14 +145,14 @@ function createAreaReport(rootDir: string, area: ImportAreaConfig): ImportComple
   };
 }
 
-function collectIdsFromFiles(rootDir: string, inputDir: string, extension: string): string[] {
-  return collectFiles(rootDir, inputDir, extension).map((filePath) => path.basename(filePath, extension)).sort();
+function collectIdsFromFiles(rootDir: string, inputDirs: string[], extension: string): string[] {
+  return collectFiles(rootDir, inputDirs, extension).map((filePath) => path.basename(filePath, extension)).sort();
 }
 
-function collectRuntimeIds(rootDir: string, inputDir: string, runtimeKind: string | undefined): string[] {
+function collectRuntimeIds(rootDir: string, inputDirs: string[], runtimeKind: string | undefined): string[] {
   const ids: string[] = [];
 
-  for (const filePath of collectFiles(rootDir, inputDir, ".json")) {
+  for (const filePath of collectFiles(rootDir, inputDirs, ".json")) {
     let parsed: unknown;
     try {
       parsed = JSON.parse(readFileSync(filePath, "utf8"));
@@ -163,13 +175,15 @@ function collectRuntimeIds(rootDir: string, inputDir: string, runtimeKind: strin
   return ids.sort();
 }
 
-function collectFiles(rootDir: string, inputDir: string, extension: string): string[] {
-  const absoluteInputDir = path.resolve(rootDir, inputDir);
-  if (!existsSync(absoluteInputDir) || !statSync(absoluteInputDir).isDirectory()) {
-    return [];
-  }
+function collectFiles(rootDir: string, inputDirs: string[], extension: string): string[] {
+  return inputDirs.flatMap((inputDir) => {
+    const absoluteInputDir = path.resolve(rootDir, inputDir);
+    if (!existsSync(absoluteInputDir) || !statSync(absoluteInputDir).isDirectory()) {
+      return [];
+    }
 
-  return collectFilesRecursive(absoluteInputDir, extension).sort();
+    return collectFilesRecursive(absoluteInputDir, extension);
+  }).sort();
 }
 
 function collectFilesRecursive(absoluteInputDir: string, extension: string): string[] {

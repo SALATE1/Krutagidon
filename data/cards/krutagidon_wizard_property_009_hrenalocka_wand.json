@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "cardId": "krutagidon_wizard_property_009_hrenalocka_wand",
   "source": {
-    "draft": "data/import/wizard-property-drafts/wizard-property-009.json",
-    "image": "assets/wizard-property/raw/Свойство 9.jpg",
-    "ocrText": "data/import/wizard-property-texts/wp_009.md"
+    "draft": "data/import/tokens/wizard-property/drafts/wizard-property-009.json",
+    "image": "assets/wizard-property/Свойство 9.jpg",
+    "text": "data/import/tokens/wizard-property/texts/wp_009.md"
   },
   "visible": {
     "nameRu": "Палочка-хреналочка",

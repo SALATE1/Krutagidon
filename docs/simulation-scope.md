@@ -140,9 +140,9 @@ PDF-правила не являются рабочей спецификацие
 
 Пайплайн:
 
-1. `assets/cards/raw/*.{webp,png,jpg,jpeg}` - исходные изображения.
-2. OCR agent создает `data/import/card-texts/<card-id>.md`.
-3. Card JSON agent создает `data/import/card-drafts/<card-id>.json`.
+1. `assets/cards/*.{webp,png,jpg,jpeg}` - исходные изображения.
+2. Source text agent создает `data/import/cards/main/texts/<card-id>.md`.
+3. Card JSON agent создает `data/import/cards/main/drafts/<card-id>.json`.
 4. Engine Mapping agent создает или обновляет runtime-поля для `data/cards/<card-id>.json`.
 
-Первый OCR-этап должен извлекать только видимые русские поля с изображений. Английские названия, переводы и догадки запрещены на этом этапе.
+Первый source text этап должен извлекать только видимые русские поля с изображений. Английские названия, переводы и догадки запрещены на этом этапе.

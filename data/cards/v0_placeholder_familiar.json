@@ -7,17 +7,25 @@
     "victoryPoints": 2,
     "typeRu": "Фамильяр",
     "cardKind": "familiar",
-    "cardTypes": ["familiar"],
+    "cardTypes": [
+      "familiar"
+    ],
     "textRu": "v0/user-provided placeholder: +3 мощь. Защита: сбрось карту, чтобы избежать атаки.",
-    "markers": ["v0-user-provided-placeholder"],
-    "uncertainty": ["placeholder familiar for v0 simulation"]
+    "markers": [
+      "v0-user-provided-placeholder"
+    ],
+    "uncertainty": [
+      "placeholder familiar for v0 simulation"
+    ]
   },
   "engine": {
     "runtimeSchema": "krutagidon.cardDefinition.v0",
     "mappingStatus": "v0-user-provided-placeholder",
     "playableInV0": true,
     "cardKind": "familiar",
-    "cardTypes": ["familiar"],
+    "cardTypes": [
+      "familiar"
+    ],
     "cost": 6,
     "victoryPoints": 2,
     "isOngoing": false,

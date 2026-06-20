@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "cardId": "esw2_dbg__ocr_038",
   "source": {
-    "draft": "data/import/card-drafts/esw2_dbg__ocr_038.json",
-    "image": "assets/cards/raw/1000009226.jpg",
-    "ocrText": "data/import/card-texts/esw2_dbg__ocr_038.md"
+    "draft": "data/import/cards/main/drafts/esw2_dbg__ocr_038.json",
+    "image": "assets/cards/1000009226.jpg",
+    "text": "data/import/cards/main/texts/esw2_dbg__ocr_038.md"
   },
   "visible": {
     "nameRu": "Виагрус, твёрдый лорд",

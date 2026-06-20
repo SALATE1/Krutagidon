@@ -9,13 +9,13 @@ import { formatImportCompletenessReport, createImportCompletenessReport } from "
 test("import completeness report summarizes raw, draft, runtime, and draft validation gaps", () => {
   const rootDir = mkdtempSync(path.join(tmpdir(), "krutagidon-import-completeness-"));
 
-  writeText(rootDir, "data/import/card-texts/esw2_dbg__main_001.md", "card text");
-  writeJson(rootDir, "data/import/card-drafts/esw2_dbg__main_001.json", createValidCardDraft("esw2_dbg__main_001"));
+  writeText(rootDir, "data/import/cards/main/texts/esw2_dbg__main_001.md", "card text");
+  writeJson(rootDir, "data/import/cards/main/drafts/esw2_dbg__main_001.json", createValidCardDraft("esw2_dbg__main_001"));
   writeJson(rootDir, "data/cards/esw2_dbg__main_001.json", { id: "esw2_dbg__main_001" });
 
-  writeText(rootDir, "data/import/card-texts/esw2_dbg__main_002.md", "missing draft text");
+  writeText(rootDir, "data/import/cards/main/texts/esw2_dbg__main_002.md", "missing draft text");
 
-  writeJson(rootDir, "data/import/wizard-property-drafts/esw2_dbg__wizard_property_001.json", {
+  writeJson(rootDir, "data/import/tokens/wizard-property/drafts/esw2_dbg__wizard_property_001.json", {
     ...createValidWizardPropertyDraft("esw2_dbg__wizard_property_001"),
     visible: {
       sourceLabel: "Свойство 1",
@@ -28,10 +28,10 @@ test("import completeness report summarizes raw, draft, runtime, and draft valid
     kind: "wizardProperty",
   });
 
-  writeText(rootDir, "data/import/DWT-texts/esw2_dbg__dead_wizard_token_001.md", "dwt text");
+  writeText(rootDir, "data/import/tokens/dead-wizard-token/texts/esw2_dbg__dead_wizard_token_001.md", "dwt text");
   writeJson(
     rootDir,
-    "data/import/dead-wizard-token-drafts/esw2_dbg__dead_wizard_token_001.json",
+    "data/import/tokens/dead-wizard-token/drafts/esw2_dbg__dead_wizard_token_001.json",
     createValidDeadWizardTokenDraft("esw2_dbg__dead_wizard_token_001"),
   );
 
@@ -50,11 +50,11 @@ test("import completeness report summarizes raw, draft, runtime, and draft valid
 test("import completeness report reads runtime cardId and nested tokenId files", () => {
   const rootDir = mkdtempSync(path.join(tmpdir(), "krutagidon-import-runtime-ids-"));
 
-  writeJson(rootDir, "data/import/card-drafts/esw2_dbg__main_001.json", createValidCardDraft("esw2_dbg__main_001"));
+  writeJson(rootDir, "data/import/cards/main/drafts/esw2_dbg__main_001.json", createValidCardDraft("esw2_dbg__main_001"));
   writeJson(rootDir, "data/cards/esw2_dbg__main_001.json", { cardId: "esw2_dbg__main_001" });
   writeJson(
     rootDir,
-    "data/import/wizard-property-drafts/esw2_dbg__wizard_property_001.json",
+    "data/import/tokens/wizard-property/drafts/esw2_dbg__wizard_property_001.json",
     createValidWizardPropertyDraft("esw2_dbg__wizard_property_001"),
   );
   writeJson(rootDir, "data/tokens/wizard-properties/esw2_dbg__wizard_property_001.json", {
@@ -73,7 +73,7 @@ test("import completeness report keeps long gap lists concise", () => {
   const rootDir = mkdtempSync(path.join(tmpdir(), "krutagidon-import-concise-"));
 
   for (let index = 1; index <= 12; index += 1) {
-    writeText(rootDir, `data/import/card-texts/esw2_dbg__main_${String(index).padStart(3, "0")}.md`, "card text");
+    writeText(rootDir, `data/import/cards/main/texts/esw2_dbg__main_${String(index).padStart(3, "0")}.md`, "card text");
   }
 
   const output = formatImportCompletenessReport(createImportCompletenessReport(rootDir));
@@ -89,8 +89,8 @@ function createValidCardDraft(cardId: string) {
     draftKind: "cardDraft",
     cardId,
     source: {
-      image: "assets/cards/raw/example.jpg",
-      text: `data/import/card-texts/${cardId}.md`,
+      image: "assets/cards/spell/example.jpg",
+      text: `data/import/cards/main/texts/${cardId}.md`,
     },
     visible: {
       nameRu: "Тестовая карта",
@@ -114,8 +114,8 @@ function createValidWizardPropertyDraft(tokenId: string) {
     tokenId,
     kind: "wizardProperty",
     source: {
-      image: "assets/wizard-property/raw/example.jpg",
-      text: `data/import/wizard-property-texts/${tokenId}.md`,
+      image: "assets/wizard-property/example.jpg",
+      text: `data/import/tokens/wizard-property/texts/${tokenId}.md`,
     },
     visible: {
       sourceLabel: "Свойство 1",
@@ -133,8 +133,8 @@ function createValidDeadWizardTokenDraft(tokenId: string) {
     tokenId,
     kind: "deadWizardToken",
     source: {
-      image: "assets/DWT/raw/example.jpg",
-      text: `data/import/DWT-texts/${tokenId}.md`,
+      image: "assets/dead-wizard-token/example.jpg",
+      text: `data/import/tokens/dead-wizard-token/texts/${tokenId}.md`,
     },
     visible: {
       sourceLabel: "Жетон мертвого волшебника 1",

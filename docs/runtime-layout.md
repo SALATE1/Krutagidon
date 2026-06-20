@@ -16,14 +16,24 @@
 ```text
 assets/
   cards/
-    main/
-    legend/
-    starter/
+    creature/
     familiar/
+    legend/
+      creature/
+      location/
+      spell/
+      treasure/
+      wizard-card/
+    location/
+    mayhem/
+    mega-mayhem/
     special/
-  tokens/
-    dead-wizard/
-    wizard-property/
+    spell/
+    starter/
+    treasure/
+    wizard-card/
+  dead-wizard-token/
+  wizard-property/
 ```
 
 `special` используется для особых runtime-карт и стопок, например Wild Magic и Limp Wand. Если позже появятся реальные варианты обработанных изображений, для них нужно явно зафиксировать отдельный контракт. Слова `processed` в пути или данных не являются каноническим маркером статуса.
@@ -51,7 +61,7 @@ data/import/
       texts/
       drafts/
   tokens/
-    dead-wizard/
+    dead-wizard-token/
       texts/
       drafts/
     wizard-property/
@@ -92,7 +102,7 @@ Token definitions хранятся отдельно от card definitions:
 
 ```text
 data/tokens/
-  dead-wizard/
+  dead-wizard-token/
   wizard-property/
 ```
 

@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "cardId": "esw2_dbg__ocr_031",
   "source": {
-    "draft": "data/import/card-drafts/esw2_dbg__ocr_031.json",
-    "image": "assets/cards/raw/1000009189.jpg",
-    "ocrText": "data/import/card-texts/esw2_dbg__ocr_031.md"
+    "draft": "data/import/cards/main/drafts/esw2_dbg__ocr_031.json",
+    "image": "assets/cards/1000009189.jpg",
+    "text": "data/import/cards/main/texts/esw2_dbg__ocr_031.md"
   },
   "visible": {
     "nameRu": "2L",

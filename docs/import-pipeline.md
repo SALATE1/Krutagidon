@@ -38,18 +38,18 @@ Runtime JSON - единственный слой, где появляются en
 
 ```text
 assets/cards/<source-group>/
-assets/tokens/dead-wizard/
-assets/tokens/wizard-property/
+assets/dead-wizard-token/
+assets/wizard-property/
 
 data/import/cards/<source-group>/texts/
 data/import/cards/<source-group>/drafts/
-data/import/tokens/dead-wizard/texts/
-data/import/tokens/dead-wizard/drafts/
+data/import/tokens/dead-wizard-token/texts/
+data/import/tokens/dead-wizard-token/drafts/
 data/import/tokens/wizard-property/texts/
 data/import/tokens/wizard-property/drafts/
 
 data/cards/<source-group>/
-data/tokens/dead-wizard/
+data/tokens/dead-wizard-token/
 data/tokens/wizard-property/
 data/decks/
 data/stacks/cards/

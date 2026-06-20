@@ -522,14 +522,16 @@ test("executable data-pack validation rejects manifest references to import-only
     ...dataPack,
     manifest: {
       ...dataPack.manifest,
-      tokenDefinitionPaths: ["data/import/wizard-property-drafts"],
+      tokenDefinitionPaths: ["data/import/tokens/wizard-property/drafts"],
     },
   });
 
   assert.equal(result.ok, false);
   assert.ok(
     result.errors.some((error) => {
-      return error.includes("tokenDefinitionPaths[0]") && error.includes("data/import/wizard-property-drafts");
+      return (
+        error.includes("tokenDefinitionPaths[0]") && error.includes("data/import/tokens/wizard-property/drafts")
+      );
     }),
   );
 });

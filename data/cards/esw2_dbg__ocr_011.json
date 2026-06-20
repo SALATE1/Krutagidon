@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "cardId": "esw2_dbg__ocr_011",
   "source": {
-    "draft": "data/import/card-drafts/esw2_dbg__ocr_011.json",
-    "image": "assets/cards/raw/1000009134.jpg",
-    "ocrText": "data/import/card-texts/esw2_dbg__ocr_011.md"
+    "draft": "data/import/cards/main/drafts/esw2_dbg__ocr_011.json",
+    "image": "assets/cards/1000009134.jpg",
+    "text": "data/import/cards/main/texts/esw2_dbg__ocr_011.md"
   },
   "visible": {
     "nameRu": "Желатиновый сисяк",

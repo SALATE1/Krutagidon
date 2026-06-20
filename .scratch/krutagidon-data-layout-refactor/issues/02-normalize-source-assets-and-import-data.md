@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: Done
 
 # Normalize Source Assets and Import Data
 
@@ -10,16 +10,16 @@ This issue owns source-layer cleanup only. It should not rename runtime card IDs
 
 ## Acceptance criteria
 
-- [ ] Remove redundant `raw` path segments from asset layout and update references to the new image paths.
-- [ ] Use clear kebab-case asset groups where applicable, including `dead-wizard-token`, `wizard-property`, `mega-mayhem`, and `wizard-card`.
-- [ ] Normalize card import paths to `data/import/cards/<source-group>/texts` and `data/import/cards/<source-group>/drafts`.
-- [ ] Rename `data/import/cards/legeng` to `data/import/cards/legend`.
-- [ ] Move direct source files in `special` and `starter` into the appropriate `texts` or `drafts` folder.
-- [ ] Remove `.cache` and backup artifacts from the canonical import tree, or move them out of canonical paths if they must be retained.
-- [ ] Remove deprecated `data/import/card-texts` and `data/import/card-drafts` only after all references have been migrated.
-- [ ] Remove `processed marker` lines and `status: processed` from canonical source markdown/index data.
-- [ ] Update import validation and import completeness reporting to read the normalized source structure.
-- [ ] Update focused tests for import validation/reporting.
+- [x] Remove redundant `raw` path segments from asset layout and update references to the new image paths.
+- [x] Use clear kebab-case asset groups where applicable, including `dead-wizard-token`, `wizard-property`, `mega-mayhem`, and `wizard-card`.
+- [x] Normalize card import paths to `data/import/cards/<source-group>/texts` and `data/import/cards/<source-group>/drafts`.
+- [x] Rename `data/import/cards/legeng` to `data/import/cards/legend`.
+- [x] Move direct source files in `special` and `starter` into the appropriate `texts` or `drafts` folder.
+- [x] Remove `.cache` and backup artifacts from the canonical import tree, or move them out of canonical paths if they must be retained.
+- [x] Remove deprecated `data/import/card-texts` and `data/import/card-drafts` only after all references have been migrated.
+- [x] Remove `processed marker` lines and `status: processed` from canonical source markdown/index data.
+- [x] Update import validation and import completeness reporting to read the normalized source structure.
+- [x] Update focused tests for import validation/reporting.
 
 ## Blocked by
 
