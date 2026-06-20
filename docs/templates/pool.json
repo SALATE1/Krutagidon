@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "poolId": "v0-familiar-pool",
+  "runtimeSchema": "krutagidon.poolComposition.v0",
+  "role": "familiarPool",
+  "objectType": "card",
+  "entries": [
+    {
+      "cardId": "esw2_dbg__familiar_001",
+      "count": 1
+    }
+  ],
+  "notes": []
+}

@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "deckId": "v0-main-deck-first-batch",
+  "runtimeSchema": "krutagidon.deckComposition.v0",
+  "role": "mainDeck",
+  "entries": [
+    {
+      "cardId": "esw2_dbg__main_001",
+      "count": 2
+    }
+  ],
+  "notes": []
+}

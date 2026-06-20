@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "stackId": "v0-wild-magic-stack",
+  "runtimeSchema": "krutagidon.stackComposition.v0",
+  "role": "wildMagicStack",
+  "objectType": "card",
+  "entries": [
+    {
+      "cardId": "esw2_dbg__special_001",
+      "count": 16
+    }
+  ],
+  "notes": []
+}

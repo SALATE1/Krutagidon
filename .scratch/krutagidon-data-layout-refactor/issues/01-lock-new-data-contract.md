@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: Done
 
 # Lock New Data Contract
 
@@ -10,14 +10,14 @@ The issue should update the import guidance so future agents can reliably move f
 
 ## Acceptance criteria
 
-- [ ] Add `docs/runtime-layout.md` describing the target layout for `assets`, `data/import`, `data/cards`, `data/tokens`, `data/packs`, `data/decks`, `data/stacks`, and `data/pools`.
-- [ ] Update `docs/import-pipeline.md` to use `source.text`, current import paths, and the `image -> source md -> draft JSON -> runtime JSON -> pack` flow.
-- [ ] Remove or replace stale OCR language where it describes the canonical pipeline; source text must not imply OCR.
-- [ ] Document the ID style `esw2_dbg__<source-group>_<number>` and state that card meaning, Russian names, and visible card types do not belong in IDs or filenames.
-- [ ] Document that `processed`, `processedMarker`, and `status: processed` are not canonical data markers; import status is derived from file presence.
-- [ ] Add JSON templates under `docs/templates/` for card draft, card runtime, token draft, token runtime, deck, stack, pool, and pack files.
-- [ ] Preserve the language boundary: `CONTEXT.md` is for project terms, while `docs/rules-glossary.md` is for tabletop/game terms.
-- [ ] Do not move or rename runtime/import data files in this issue.
+- [x] Add `docs/runtime-layout.md` describing the target layout for `assets`, `data/import`, `data/cards`, `data/tokens`, `data/packs`, `data/decks`, `data/stacks`, and `data/pools`.
+- [x] Update `docs/import-pipeline.md` to use `source.text`, current import paths, and the `image -> source md -> draft JSON -> runtime JSON -> pack` flow.
+- [x] Remove or replace stale OCR language where it describes the canonical pipeline; source text must not imply OCR.
+- [x] Document the ID style `esw2_dbg__<source-group>_<number>` and state that card meaning, Russian names, and visible card types do not belong in IDs or filenames.
+- [x] Document that `processed`, `processedMarker`, and `status: processed` are not canonical data markers; import status is derived from file presence.
+- [x] Add JSON templates under `docs/templates/` for card draft, card runtime, token draft, token runtime, deck, stack, pool, and pack files.
+- [x] Preserve the language boundary: `CONTEXT.md` is for project terms, while `docs/rules-glossary.md` is for tabletop/game terms.
+- [x] Do not move or rename runtime/import data files in this issue.
 
 ## Blocked by
 

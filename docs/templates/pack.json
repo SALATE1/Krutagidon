@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "packId": "v0-first-batch-playable-data-pack",
+  "runtimeSchema": "krutagidon.dataPack.v0",
+  "cardDefinitionPaths": [
+    "data/cards/main",
+    "data/cards/legend",
+    "data/cards/starter",
+    "data/cards/familiar",
+    "data/cards/special"
+  ],
+  "tokenDefinitionPaths": [
+    "data/tokens/dead-wizard",
+    "data/tokens/wizard-property"
+  ],
+  "decks": {
+    "mainDeck": "data/decks/v0-main-deck-first-batch.json",
+    "legendDeck": "data/decks/v0-legend-deck-first-batch.json",
+    "starterDeck": "data/decks/v0-starter-deck.json"
+  },
+  "cardStacks": {
+    "wildMagicStack": "data/stacks/cards/v0-wild-magic-stack.json",
+    "limpWandStack": "data/stacks/cards/v0-limp-wand-stack.json"
+  },
+  "tokenStacks": {
+    "deadWizardTokens": "data/stacks/tokens/v0-dead-wizard-token-stack.json",
+    "wizardProperties": "data/stacks/tokens/v0-wizard-property-stack.json"
+  },
+  "pools": {
+    "familiarPool": "data/pools/v0-familiar-pool.json"
+  },
+  "notes": []
+}
