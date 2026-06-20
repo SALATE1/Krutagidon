@@ -6,6 +6,7 @@ import {
   type TokenStackComposition,
   type TokenDefinition,
 } from "./data.js";
+import { runMarketFlow } from "./market-flow.js";
 import { createSeededRng, type RandomSource } from "./rng.js";
 
 export type PlayerId = `player-${number}`;
@@ -161,30 +162,13 @@ export function initializeGame(options: InitializeGameOptions): GameState {
     deadWizardTokens: instantiateDeadWizardTokens(dataPack, tokenFactory, rng, playerCount),
   };
 
-  fillMarket({
-    sourceDeck: common.mainDeck,
-    market: common.market,
-    destroyedEvents: common.destroyedMayhem,
-    targetSize: 5,
-    eventKind: "mayhem",
-    dataPack,
-  });
-  fillMarket({
-    sourceDeck: common.legendDeck,
-    market: common.legendMarket,
-    destroyedEvents: common.destroyedMegaMayhem,
-    targetSize: 3,
-    eventKind: "megaMayhem",
-    dataPack,
-  });
-
   const randomActivePlayer = players[rng.nextInt(players.length)];
   if (randomActivePlayer === undefined) {
     throw new Error("Cannot select active player from an empty player list");
   }
   const activePlayer = getForcedStartingPlayer(players, dataPack) ?? randomActivePlayer;
 
-  return {
+  const state: GameState = {
     seed: options.seed,
     rng,
     activePlayerId: activePlayer.playerId,
@@ -198,12 +182,22 @@ export function initializeGame(options: InitializeGameOptions): GameState {
     common,
     cardDefinitions: dataPack.cardDefinitions,
     tokenDefinitions: dataPack.tokenDefinitions,
-    eventLog: [
-      {
-        type: "gameInitialized",
-      },
-    ],
+    eventLog: [],
   };
+
+  const marketFlowResult = runMarketFlow(state, { mode: "setup" });
+  if (!marketFlowResult.ok) {
+    throw new Error(marketFlowResult.error);
+  }
+  if (marketFlowResult.gameEndReason !== undefined) {
+    throw new Error(`Cannot initialize game: ${marketFlowResult.gameEndReason}`);
+  }
+
+  state.eventLog.push({
+    type: "gameInitialized",
+  });
+
+  return state;
 }
 
 function instantiateDeadWizardTokens(
@@ -502,48 +496,6 @@ function instantiateTokenStack(
   }
 
   return instances;
-}
-
-function fillMarket(options: {
-  sourceDeck: CardInstance[];
-  market: CardInstance[];
-  destroyedEvents: CardInstance[];
-  targetSize: number;
-  eventKind: CardDefinition["engine"]["cardKind"];
-  dataPack: LoadedDataPack;
-}): void {
-  while (options.market.length < options.targetSize) {
-    const card = drawFromTop(options.sourceDeck);
-    if (card === undefined) {
-      throw new Error(`Cannot fill market to ${options.targetSize}; source deck is empty`);
-    }
-
-    const definition = mustGetDefinition(options.dataPack, card.definitionId);
-    if (definition.engine.cardKind === options.eventKind) {
-      options.destroyedEvents.push(card);
-      continue;
-    }
-
-    options.market.push(card);
-    applyMarketChipMarker(options.dataPack, options.market, definition);
-  }
-}
-
-function applyMarketChipMarker(
-  dataPack: LoadedDataPack,
-  market: CardInstance[],
-  addedDefinition: CardDefinition,
-): void {
-  if (!addedDefinition.engine.marketChipMarker) {
-    return;
-  }
-
-  for (const card of market) {
-    const definition = mustGetDefinition(dataPack, card.definitionId);
-    if (definition.engine.marketChipMarker) {
-      card.marketChips += 1;
-    }
-  }
 }
 
 function drawCards(player: PlayerState, count: number): void {

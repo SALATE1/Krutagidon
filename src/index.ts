@@ -42,6 +42,8 @@ export type {
 export { initializeGame } from "./engine/setup.js";
 export type { ActionResult, GameAction, LegalAction } from "./engine/actions.js";
 export { applyAction, listLegalActions } from "./engine/actions.js";
+export type { MarketFlowEndReason, MarketFlowMode, MarketFlowResult, RunMarketFlowOptions } from "./engine/market-flow.js";
+export { runMarketFlow } from "./engine/market-flow.js";
 export type { ControlledObjectView, EffectiveValueKind, EffectiveValueTarget } from "./engine/effective-values.js";
 export {
   buildControlledObjectView,

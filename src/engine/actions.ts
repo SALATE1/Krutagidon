@@ -1,7 +1,5 @@
-import type { CardDefinition } from "./data.js";
 import {
   executeActivationEffects,
-  executeMayhemEffects,
   executeOnPlayEffects,
   executeWizardPropertyOnPlayCardEffects,
   executeWizardPropertyActivationEffects,
@@ -10,6 +8,7 @@ import {
   moveGainedCardToPlayerDestination,
 } from "./effect-runtime.js";
 import { calculateEffectiveCardCost } from "./effective-values.js";
+import { runMarketFlow, type MarketFlowEndReason } from "./market-flow.js";
 import type { CardInstance, GameState, PlayerState, TokenInstance } from "./setup.js";
 
 export type LegalAction =
@@ -46,8 +45,6 @@ export interface ActivateWizardPropertyAction {
 export interface EndTurnAction {
   type: "endTurn";
 }
-
-export type MarketFlowEndReason = "mainDeckExhausted" | "legendDeckExhausted";
 
 export type ActionResult =
   | {
@@ -132,7 +129,7 @@ function endTurn(state: GameState): ActionResult {
   state.turn.gainedCardDefinitionIds = [];
   state.turn.number += 1;
   state.activePlayerId = getNextPlayer(state, activePlayer).playerId;
-  const marketFlowResult = runMarketFlow(state);
+  const marketFlowResult = runMarketFlow(state, { mode: "turn" });
   if (!marketFlowResult.ok) {
     return marketFlowResult;
   }
@@ -478,133 +475,6 @@ function drawCards(player: PlayerState, count: number, state: GameState): void {
   }
 }
 
-function runMarketFlow(state: GameState): ActionResult {
-  const legendResult = fillMarketThroughMarketFlow(state, {
-    sourceDeck: state.common.legendDeck,
-    market: state.common.legendMarket,
-    destroyedEvents: state.common.destroyedMegaMayhem,
-    targetSize: 3,
-    eventKind: "megaMayhem",
-    eventLogType: "megaMayhemDestroyed",
-    endReason: "legendDeckExhausted",
-  });
-  if (!legendResult.ok) {
-    return legendResult;
-  }
-  if (legendResult.gameEndReason !== undefined) {
-    return legendResult;
-  }
-
-  const mainResult = fillMarketThroughMarketFlow(state, {
-    sourceDeck: state.common.mainDeck,
-    market: state.common.market,
-    destroyedEvents: state.common.destroyedMayhem,
-    targetSize: 5,
-    eventKind: "mayhem",
-    eventLogType: "mayhemDestroyed",
-    endReason: "mainDeckExhausted",
-  });
-  if (!mainResult.ok) {
-    return mainResult;
-  }
-  if (mainResult.gameEndReason !== undefined) {
-    return mainResult;
-  }
-
-  return { ok: true };
-}
-
-function fillMarketThroughMarketFlow(
-  state: GameState,
-  options: {
-    sourceDeck: CardInstance[];
-    market: CardInstance[];
-    destroyedEvents: CardInstance[];
-    targetSize: number;
-    eventKind: CardDefinition["engine"]["cardKind"];
-    eventLogType: string;
-    endReason: MarketFlowEndReason;
-  },
-): ActionResult {
-  while (options.market.length < options.targetSize) {
-    const card = options.sourceDeck.shift();
-    if (card === undefined) {
-      state.eventLog.push({
-        type: "marketFlowFailed",
-      });
-      return { ok: true, gameEndReason: options.endReason };
-    }
-
-    const definition = mustGetDefinition(state, card.definitionId);
-    if (definition.engine.cardKind === options.eventKind) {
-      const mayhemResult = executeMayhemCard(state, card, definition);
-      if (!mayhemResult.ok) {
-        return mayhemResult;
-      }
-
-      options.destroyedEvents.push(card);
-      state.eventLog.push({
-        type: options.eventLogType,
-        cardInstanceId: card.instanceId,
-        definitionId: card.definitionId,
-      });
-      continue;
-    }
-
-    options.market.push(card);
-    state.eventLog.push({
-      type: "marketFlowCardAdded",
-      cardInstanceId: card.instanceId,
-      definitionId: card.definitionId,
-    });
-    applyMarketChipMarker(state, options.market, definition);
-  }
-
-  return { ok: true };
-}
-
-function executeMayhemCard(state: GameState, card: CardInstance, definition: CardDefinition): ActionResult {
-  const activePlayer = mustGetActivePlayer(state);
-  const effectResult = executeMayhemEffects(state, activePlayer, definition, {
-    sourceType: "card",
-    playerId: activePlayer.playerId,
-    cardInstanceId: card.instanceId,
-    definitionId: card.definitionId,
-  });
-  if (!effectResult.ok) {
-    return effectResult;
-  }
-
-  state.eventLog.push({
-    type: "mayhemResolved",
-    playerId: activePlayer.playerId,
-    cardInstanceId: card.instanceId,
-    definitionId: card.definitionId,
-  });
-  return { ok: true };
-}
-
-function applyMarketChipMarker(state: GameState, market: CardInstance[], addedDefinition: CardDefinition): void {
-  if (!addedDefinition.engine.marketChipMarker) {
-    return;
-  }
-
-  for (const card of market) {
-    const definition = mustGetDefinition(state, card.definitionId);
-    if (!definition.engine.marketChipMarker) {
-      continue;
-    }
-
-    card.marketChips += 1;
-    state.eventLog.push({
-      type: "marketChipAdded",
-      cardInstanceId: card.instanceId,
-      definitionId: card.definitionId,
-      amount: 1,
-    });
-  }
-}
-
 function getNextPlayer(state: GameState, player: PlayerState): PlayerState {
   const playerIndex = state.players.findIndex((candidate) => candidate.playerId === player.playerId);
   const nextPlayer = state.players[(playerIndex + 1) % state.players.length];
@@ -638,7 +508,7 @@ function mustGetActivePlayer(state: GameState): PlayerState {
   return activePlayer;
 }
 
-function mustGetDefinition(state: GameState, definitionId: string): CardDefinition {
+function mustGetDefinition(state: GameState, definitionId: string) {
   const definition = state.cardDefinitions.get(definitionId);
   if (definition === undefined) {
     throw new Error(`Missing card definition ${definitionId}`);

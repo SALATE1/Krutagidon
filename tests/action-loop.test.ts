@@ -6,6 +6,7 @@ import {
   calculateEffectivePlayerMaxLife,
   initializeGame,
   listLegalActions,
+  runMarketFlow,
   scoreGame,
   type CardInstance,
   type CardDefinition,
@@ -248,6 +249,43 @@ test("mayhem revealed during Market Flow resolves and Market Flow continues with
     (event) => event.type === "mayhemResolved" && event.cardInstanceId === mayhem.instanceId,
     (event) => event.type === "mayhemDestroyed" && event.cardInstanceId === mayhem.instanceId,
     (event) => event.type === "marketFlowCardAdded" && event.cardInstanceId === normalCard.instanceId,
+  ]);
+});
+
+test("Market Flow interface keeps setup Mayhem passive and turn Mayhem active", () => {
+  const setupState = createMarketFlowModeFixture();
+  const setupMayhem = setupState.common.mainDeck[0];
+  const setupNormal = setupState.common.mainDeck[1];
+  assert.ok(setupMayhem);
+  assert.ok(setupNormal);
+
+  const setupResult = runMarketFlow(setupState, { mode: "setup" });
+
+  assert.equal(setupResult.ok, true);
+  assert.equal(setupState.turn.power, 0);
+  assert.equal(setupState.common.destroyedMayhem.at(-1), setupMayhem);
+  assert.equal(setupState.common.market.includes(setupNormal), true);
+  assert.equal(
+    setupState.eventLog.some((event) => event.type === "mayhemResolved" && event.cardInstanceId === setupMayhem.instanceId),
+    false,
+  );
+
+  const turnState = createMarketFlowModeFixture();
+  const turnMayhem = turnState.common.mainDeck[0];
+  const turnNormal = turnState.common.mainDeck[1];
+  assert.ok(turnMayhem);
+  assert.ok(turnNormal);
+
+  const turnResult = runMarketFlow(turnState, { mode: "turn" });
+
+  assert.equal(turnResult.ok, true);
+  assert.equal(turnState.turn.power, 2);
+  assert.equal(turnState.common.destroyedMayhem.at(-1), turnMayhem);
+  assert.equal(turnState.common.market.includes(turnNormal), true);
+  assertEventOrder(turnState, [
+    (event) => event.type === "mayhemResolved" && event.cardInstanceId === turnMayhem.instanceId,
+    (event) => event.type === "mayhemDestroyed" && event.cardInstanceId === turnMayhem.instanceId,
+    (event) => event.type === "marketFlowCardAdded" && event.cardInstanceId === turnNormal.instanceId,
   ]);
 });
 
@@ -2916,6 +2954,39 @@ function addFixtureCardToActiveHand(
   });
 
   return cardInstanceId;
+}
+
+function createMarketFlowModeFixture(): GameState {
+  const state = initializeGame({ rootDir, seed: 60615 });
+  const mayhemDefinition = createFixtureCardDefinition(
+    "fixture-market-flow-interface-mayhem",
+    [{ effectId: "add_power", timing: "onMayhemResolve", amount: 2 }],
+    { cardKind: "mayhem" },
+  );
+  const normalDefinition = createFixtureCardDefinition("fixture-market-flow-interface-normal", []);
+  state.cardDefinitions = new Map([
+    ...state.cardDefinitions,
+    [mayhemDefinition.cardId, mayhemDefinition],
+    [normalDefinition.cardId, normalDefinition],
+  ]);
+  state.common.market.splice(0, state.common.market.length, ...state.common.market.slice(0, 4));
+  state.common.mainDeck.splice(
+    0,
+    state.common.mainDeck.length,
+    {
+      instanceId: "fixture-market-flow-interface-mayhem-instance",
+      definitionId: mayhemDefinition.cardId,
+      ownerId: "common",
+      marketChips: 0,
+    },
+    {
+      instanceId: "fixture-market-flow-interface-normal-instance",
+      definitionId: normalDefinition.cardId,
+      ownerId: "common",
+      marketChips: 0,
+    },
+  );
+  return state;
 }
 
 function findOwnedCard(player: PlayerState, definitionId: string): CardInstance | undefined {
