@@ -44,6 +44,10 @@ _Avoid_: raw import, card draft, OCR source
 The shared execution model for mapped effects from cards, tokens, statuses, and event-like objects. It uses one effect language regardless of the source object.
 _Avoid_: card-only effect runtime, token mini-runtime
 
+**Single-Game Debug Trace**:
+A human-readable projection over one deterministic game's event log. It explains game terms such as card play, target choice, zone movement, death, DWT, and Trophy movement without requiring the reader to inspect raw event objects. Current trace output is incomplete where event logs lack turn numbers or before/after state.
+_Avoid_: raw event log, full replay file
+
 **Effect Helper**:
 A shared engine operation that applies an effect consequence immediately and records the resulting typed events. Effects are resolved sequentially through helpers rather than by building a separate pending-event queue.
 _Avoid_: pending effect queue, event-only effect execution
