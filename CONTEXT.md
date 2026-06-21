@@ -36,6 +36,46 @@ _Avoid_: ocrText, OCR text
 Structured intermediate JSON created from raw import text before behavior is mapped for the engine. Draft data records visible/source facts and uncertainties, but excludes executable effects and runtime playability decisions.
 _Avoid_: runtime JSON, implemented card
 
+**Full Draft Import**:
+The project phase that regenerates canonical draft JSON from all local source text for cards and tokens, including main cards, Legend cards, starters, familiars, special cards, wizard properties, and Dead Wizard Tokens. Full Draft Import does not create runtime behavior or engine effects.
+_Avoid_: full card implementation, runtime mapping
+
+**Canonical Draft**:
+The single current draft JSON for one card or token in the expected `data/import/**/drafts/` location. During Full Draft Import, old draft bodies are overwritten or replaced rather than kept beside the canonical draft.
+_Avoid_: parallel legacy draft, duplicate current draft
+
+**Source-Text-Only Drafting**:
+The rule that Full Draft Import creates draft JSON only from local source text and known file metadata. If an agent must inspect the source image to fill a required field, it must skip that object and report a draft blocker instead of guessing.
+_Avoid_: image-assisted draft, inferred draft fact
+
+**Import Inventory**:
+A generated or one-off diagnostic view over import files that helps compare source images, source text, draft JSON, and stale index files. Import inventories are reports, not canonical data sources.
+_Avoid_: hand-maintained import index
+
+**Draft Blocker**:
+A missing or ambiguous source-text fact that prevents a canonical draft from being created without inspecting the source image. Draft blockers are reported for human/source-text cleanup before runtime mapping.
+_Avoid_: silent guess, image fallback
+
+**Derived Draft Fact**:
+A draft field that can be filled from explicit source text, source folder, or file identity without inspecting the source image, such as card kind from source group and visible type, card types from visible type, or markers from explicit words like "Атака", "Защита", or an activation icon. Derived draft facts must remain source-text-only and must not infer runtime behavior.
+_Avoid_: guessed rule behavior, image-derived fact
+
+**Mapping Note**:
+A non-executable draft note copied from source-text clarifications to help a later runtime mapping agent interpret mechanics and edge cases. Mapping notes are guidance for mapping, not visible card facts and not engine behavior.
+_Avoid_: ignored clarification, executable note
+
+**Composition Quantity**:
+The number of copies of a card or token definition included in a deck, stack, or pool. Composition quantity belongs to import/runtime composition data rather than visible card or token facts.
+_Avoid_: visible quantity, card property
+
+**Dead Wizard Token Quantity Rule**:
+The import rule that `esw2_dbg__dead_wizard_token_003` has two copies in the Dead Wizard Token stack, while the other imported Dead Wizard Token definitions are unique unless source text later says otherwise.
+_Avoid_: inferring DWT duplicates from image inspection
+
+**Dead Wizard Token Visible VP Penalty**:
+The visible negative VP number printed in a Dead Wizard Token's source text, such as `-5`, represents an additional visible penalty/effect to map later and is separate from the base DWT penalty. Draft data records the visible number without treating it as the final total DWT score.
+_Avoid_: final DWT VP total in draft
+
 **Draft Kind**:
 The required discriminator that tells import tooling which draft schema applies, such as `cardDraft`, `wizardPropertyDraft`, or `deadWizardTokenDraft`.
 _Avoid_: infer draft type from folder only, runtime kind
@@ -47,6 +87,14 @@ _Avoid_: raw import, card draft, OCR source
 **Runtime Card Source Group**:
 The runtime folder group for card definitions based on the game source or stack that owns the card, such as `main`, `legend`, `starter`, `familiar`, or `special`. Card source groups are separate from visible card types such as spell, creature, treasure, wizard card, or location.
 _Avoid_: grouping runtime card files by visible type
+
+**Singleton Special Card ID**:
+A stable non-numbered ID for a unique special card stack object whose identity is clearer than a source-group number, such as `esw2_dbg__limp_wand` or `esw2_dbg__wild_magic`.
+_Avoid_: numbered special ID for named singleton stacks
+
+**Source-Group Card ID**:
+A card ID that follows the card's source deck, stack, or pool rather than its visible card kind. Mayhem cards in the main deck use `main` IDs, and Mega Mayhem cards in the Legend deck use `legend` IDs.
+_Avoid_: mayhem category ID, mega-mayhem category ID
 
 **Deck Composition**:
 A runtime file that lists card definition IDs and counts for a true card deck, such as the main deck, Legend deck, or starter deck.
