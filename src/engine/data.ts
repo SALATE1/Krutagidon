@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 
-import { getEffectRuntimeHandler } from "./effect-runtime-registry.js";
+import { getEffectRuntimeCatalogEntry } from "./effect-runtime-registry.js";
 
 export type CardKind =
   | "starter"
@@ -249,25 +249,12 @@ export function validateExecutableDataPack(
         continue;
       }
 
-      if (mode === "combat" && effectId.startsWith("fixture_")) {
-        errors.push(
-          `Card ${definition.cardId} uses fixture effect id ${effectId} in combat data`
-        );
-        continue;
-      }
-
-      if (!isSupportedExecutableEffectId(effectId, mode)) {
-        errors.push(
-          `Card ${definition.cardId} uses unsupported effect id ${effectId}`
-        );
-        continue;
-      }
-
       errors.push(
-        ...validateSupportedEffectShape(
+        ...validateRuntimeEffectDefinition(
           `Card ${definition.cardId}`,
           effectId,
-          effect
+          effect,
+          mode
         )
       );
     }
@@ -301,25 +288,12 @@ export function validateExecutableDataPack(
         continue;
       }
 
-      if (mode === "combat" && effectId.startsWith("fixture_")) {
-        errors.push(
-          `Token ${definition.tokenId} uses fixture effect id ${effectId} in combat data`
-        );
-        continue;
-      }
-
-      if (!isSupportedExecutableEffectId(effectId, mode)) {
-        errors.push(
-          `Token ${definition.tokenId} uses unsupported effect id ${effectId}`
-        );
-        continue;
-      }
-
       errors.push(
-        ...validateSupportedEffectShape(
+        ...validateRuntimeEffectDefinition(
           `Token ${definition.tokenId}`,
           effectId,
-          effect
+          effect,
+          mode
         )
       );
     }
@@ -478,14 +452,39 @@ function readJsonFile<T>(rootDir: string, filePath: string): T {
   return JSON.parse(readFileSync(absolutePath, "utf8")) as T;
 }
 
-function isSupportedExecutableEffectId(
+function validateRuntimeEffectDefinition(
+  subjectId: string,
+  effectId: string,
+  effect: Record<string, unknown>,
+  mode: "combat" | "fixture"
+): string[] {
+  if (mode === "combat" && effectId.startsWith("fixture_")) {
+    return [`${subjectId} uses fixture effect id ${effectId} in combat data`];
+  }
+
+  const catalogEntry = getEffectRuntimeCatalogEntry(effectId);
+  if (catalogEntry !== undefined) {
+    return catalogEntry.handler.validateShape(subjectId, effect);
+  }
+
+  if (!isLegacyCompatibilityEffectId(effectId, mode)) {
+    return [`${subjectId} uses unsupported effect id ${effectId}`];
+  }
+
+  return validateLegacyCompatibilityEffectShape(
+    subjectId,
+    effectId,
+    effect,
+    mode
+  );
+}
+
+// TODO(issue 23): remove this compatibility path after legacy effect IDs are
+// registered in Effect Runtime Catalog slices.
+function isLegacyCompatibilityEffectId(
   effectId: string,
   mode: "combat" | "fixture"
 ): boolean {
-  if (getEffectRuntimeHandler(effectId) !== undefined) {
-    return true;
-  }
-
   return (
     effectId === "heal" ||
     effectId === "set_life" ||
@@ -524,16 +523,12 @@ function isSupportedExecutableEffectId(
   );
 }
 
-function validateSupportedEffectShape(
+function validateLegacyCompatibilityEffectShape(
   subjectId: string,
   effectId: string,
-  effect: Record<string, unknown>
+  effect: Record<string, unknown>,
+  mode: "combat" | "fixture"
 ): string[] {
-  const runtimeHandler = getEffectRuntimeHandler(effectId);
-  if (runtimeHandler !== undefined) {
-    return runtimeHandler.validateShape(subjectId, effect);
-  }
-
   if (
     effectId === "reveal_top_card" &&
     effect["source"] !== "activePlayerDeck"
@@ -586,7 +581,12 @@ function validateSupportedEffectShape(
 
       if (typeof optionEffectId === "string") {
         errors.push(
-          ...validateSupportedEffectShape(subjectId, optionEffectId, option)
+          ...validateRuntimeEffectDefinition(
+            subjectId,
+            optionEffectId,
+            option,
+            mode
+          )
         );
       }
     }

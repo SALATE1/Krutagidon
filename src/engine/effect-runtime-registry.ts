@@ -156,6 +156,11 @@ export interface EffectRuntimeHandler {
   ): EffectExecutionResult;
 }
 
+export interface EffectRuntimeCatalogEntry {
+  effectId: string;
+  handler: EffectRuntimeHandler;
+}
+
 const addPowerHandler: EffectRuntimeHandler = {
   effectId: "add_power",
   validateShape(subjectId, effect) {
@@ -1227,20 +1232,45 @@ function isEffectRecord(effect: unknown): effect is Record<string, unknown> {
   return typeof effect === "object" && effect !== null;
 }
 
-export const effectRuntimeRegistry = new Map<string, EffectRuntimeHandler>([
-  [addPowerHandler.effectId, addPowerHandler],
-  [gainCardHandler.effectId, gainCardHandler],
-  [discardCardHandler.effectId, discardCardHandler],
-  [destroyCardHandler.effectId, destroyCardHandler],
-  [dealDamageHandler.effectId, dealDamageHandler],
-  [attackDamageHandler.effectId, attackDamageHandler],
-  [directionalChainAttackHandler.effectId, directionalChainAttackHandler],
-  [multiTargetAttackHandler.effectId, multiTargetAttackHandler],
-  [mayhemAttackHandler.effectId, mayhemAttackHandler],
+export const effectRuntimeCatalog = new Map<string, EffectRuntimeCatalogEntry>([
+  [addPowerHandler.effectId, toCatalogEntry(addPowerHandler)],
+  [gainCardHandler.effectId, toCatalogEntry(gainCardHandler)],
+  [discardCardHandler.effectId, toCatalogEntry(discardCardHandler)],
+  [destroyCardHandler.effectId, toCatalogEntry(destroyCardHandler)],
+  [dealDamageHandler.effectId, toCatalogEntry(dealDamageHandler)],
+  [attackDamageHandler.effectId, toCatalogEntry(attackDamageHandler)],
+  [
+    directionalChainAttackHandler.effectId,
+    toCatalogEntry(directionalChainAttackHandler),
+  ],
+  [multiTargetAttackHandler.effectId, toCatalogEntry(multiTargetAttackHandler)],
+  [mayhemAttackHandler.effectId, toCatalogEntry(mayhemAttackHandler)],
 ]);
+
+export const effectRuntimeRegistry = new Map<string, EffectRuntimeHandler>(
+  [...effectRuntimeCatalog].map(([effectId, entry]) => [
+    effectId,
+    entry.handler,
+  ])
+);
+
+export function getEffectRuntimeCatalogEntry(
+  effectId: string
+): EffectRuntimeCatalogEntry | undefined {
+  return effectRuntimeCatalog.get(effectId);
+}
 
 export function getEffectRuntimeHandler(
   effectId: string
 ): EffectRuntimeHandler | undefined {
-  return effectRuntimeRegistry.get(effectId);
+  return getEffectRuntimeCatalogEntry(effectId)?.handler;
+}
+
+function toCatalogEntry(
+  handler: EffectRuntimeHandler
+): EffectRuntimeCatalogEntry {
+  return {
+    effectId: handler.effectId,
+    handler,
+  };
 }

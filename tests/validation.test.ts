@@ -421,6 +421,43 @@ test("combat data-pack validation rejects fixture effect ids", () => {
   );
 });
 
+test("effect runtime catalog validates supported, unknown, and fixture-only effects", () => {
+  const card = createFixtureCard("fixture-effect-runtime-catalog");
+  const dataPack = withOnlyFixtureCard({
+    ...card,
+    engine: {
+      ...card.engine,
+      playableInV0: true,
+      effects: [
+        {
+          effectId: "add_power",
+          timing: "onPlay",
+          amount: 1,
+        },
+        {
+          effectId: "effect_not_in_catalog",
+          timing: "onPlay",
+        },
+        {
+          effectId: "fixture_add_power_equal_to_target_cost",
+          timing: "onPlay",
+          target: {
+            selector: "mainMarketCard",
+          },
+        },
+      ],
+    },
+  });
+
+  const result = validateExecutableDataPack(dataPack);
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.errors, [
+    "Card fixture-effect-runtime-catalog uses unsupported effect id effect_not_in_catalog",
+    "Card fixture-effect-runtime-catalog uses fixture effect id fixture_add_power_equal_to_target_cost in combat data",
+  ]);
+});
+
 test("fixture mode does not allow unsupported fixture effect ids", () => {
   const dataPack = withFixtureCard({
     ...createFixtureCard("fixture-unsupported-effect-in-fixture-mode"),
