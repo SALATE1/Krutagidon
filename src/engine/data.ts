@@ -496,7 +496,6 @@ function isLegacyCompatibilityEffectId(
       "mayhem_each_player_discard_top_deck_cards_choose_destroy_all_or_none" ||
     effectId === "mayhem_each_player_choose_discard_hand_draw_or_take_damage" ||
     effectId === "mayhem_each_player_discard_deck_then_destroy_from_discard" ||
-    effectId === "avoid_attack" ||
     effectId === "reveal_top_card" ||
     effectId === "play_top_card" ||
     effectId === "draw_cards" ||
@@ -710,20 +709,6 @@ function validateLegacyCompatibilityEffectShape(
     }
 
     return errors;
-  }
-
-  if (effectId === "avoid_attack") {
-    const destination = effect["destination"];
-    if (
-      effect["timing"] !== "onDefense" ||
-      (destination !== "discardSelf" && destination !== "topdeckSelf")
-    ) {
-      return [
-        `${subjectId} uses unsupported defense branch ${String(destination)}`,
-      ];
-    }
-
-    return [];
   }
 
   return [];

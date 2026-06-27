@@ -8,7 +8,10 @@ import {
   type LoadedDataPack,
   type TokenDefinition,
 } from "../src/index.js";
-import { getEffectRuntimeHandler } from "../src/engine/effect-runtime-registry.js";
+import {
+  getEffectRuntimeCatalogEntry,
+  getEffectRuntimeHandler,
+} from "../src/engine/effect-runtime-registry.js";
 
 const rootDir = process.cwd();
 
@@ -658,6 +661,11 @@ test("executable data-pack validation rejects unsupported play-top destinations"
 });
 
 test("executable data-pack validation rejects redirect defense branches", () => {
+  assert.equal(
+    getEffectRuntimeCatalogEntry("avoid_attack")?.effectId,
+    "avoid_attack"
+  );
+
   const card = createFixtureCard("fixture-unsupported-redirect-defense");
   const dataPack = withFixtureCard({
     ...card,

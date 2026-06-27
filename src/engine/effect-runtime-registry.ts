@@ -606,6 +606,41 @@ const attackDamageHandler: EffectRuntimeHandler = {
   },
 };
 
+const avoidAttackHandler: EffectRuntimeHandler = {
+  effectId: "avoid_attack",
+  validateShape(subjectId, effect) {
+    const errors: string[] = [];
+    if (effect["timing"] !== "onDefense") {
+      errors.push(
+        `${subjectId} uses unsupported defense timing ${String(effect["timing"])}`
+      );
+    }
+
+    const destination = effect["destination"];
+    if (destination !== "discardSelf" && destination !== "topdeckSelf") {
+      errors.push(
+        `${subjectId} uses unsupported defense branch ${String(destination)}`
+      );
+    }
+
+    return errors;
+  },
+  execute(_state, _player, effect) {
+    const errors = avoidAttackHandler.validateShape(
+      "Effect avoid_attack",
+      effect
+    );
+    if (errors.length > 0) {
+      return {
+        ok: false,
+        error: errors[0] ?? "Invalid avoid_attack effect",
+      };
+    }
+
+    return { ok: true };
+  },
+};
+
 const directionalChainAttackHandler: EffectRuntimeHandler = {
   effectId: "directional_chain_attack",
   validateShape(subjectId, effect) {
@@ -1239,6 +1274,7 @@ export const effectRuntimeCatalog = new Map<string, EffectRuntimeCatalogEntry>([
   [destroyCardHandler.effectId, toCatalogEntry(destroyCardHandler)],
   [dealDamageHandler.effectId, toCatalogEntry(dealDamageHandler)],
   [attackDamageHandler.effectId, toCatalogEntry(attackDamageHandler)],
+  [avoidAttackHandler.effectId, toCatalogEntry(avoidAttackHandler)],
   [
     directionalChainAttackHandler.effectId,
     toCatalogEntry(directionalChainAttackHandler),
