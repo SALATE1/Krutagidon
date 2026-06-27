@@ -397,58 +397,6 @@ function executeEffect(
     );
   }
 
-  if (effect["effectId"] === "gain_chips") {
-    const amount = effect["amount"];
-    if (
-      typeof amount === "number" &&
-      Number.isSafeInteger(amount) &&
-      amount > 0
-    ) {
-      const chipsBefore = player.chips;
-      player.chips += amount;
-      recordEffectChipsChanged(
-        state,
-        player,
-        source,
-        "gain_chips",
-        chipsBefore,
-        player.chips
-      );
-    }
-
-    return { ok: true };
-  }
-
-  if (effect["effectId"] === "gain_chips_per_player_with_status") {
-    const amountPerPlayer = effect["amountPerPlayer"];
-    const status = effect["status"];
-    if (
-      typeof amountPerPlayer === "number" &&
-      Number.isSafeInteger(amountPerPlayer) &&
-      amountPerPlayer > 0 &&
-      status === "dingler"
-    ) {
-      const matchingPlayerCount = state.players.filter((candidate) => {
-        return candidate.statuses.some(
-          (candidateStatus) => candidateStatus.statusId === status
-        );
-      }).length;
-      const amount = matchingPlayerCount * amountPerPlayer;
-      const chipsBefore = player.chips;
-      player.chips += amount;
-      recordEffectChipsChanged(
-        state,
-        player,
-        source,
-        "gain_chips_per_player_with_status",
-        chipsBefore,
-        player.chips
-      );
-    }
-
-    return { ok: true };
-  }
-
   if (effect["effectId"] === "wild_magic_choice") {
     const options = effect["options"];
     if (!Array.isArray(options)) {
@@ -485,28 +433,6 @@ function executeEffect(
       effectId: "wild_magic_choice",
       sourceType: source.sourceType,
     });
-    return { ok: true };
-  }
-
-  if (effect["effectId"] === "draw_cards") {
-    const amount = effect["amount"];
-    if (
-      typeof amount === "number" &&
-      Number.isSafeInteger(amount) &&
-      amount > 0
-    ) {
-      const drawnCount = drawCards(player, amount, state);
-      state.eventLog.push({
-        type: "effectDrawCardsApplied",
-        playerId: player.playerId,
-        cardInstanceId: source.cardInstanceId,
-        definitionId: source.definitionId,
-        effectId: "draw_cards",
-        amount: drawnCount,
-        sourceType: source.sourceType,
-      });
-    }
-
     return { ok: true };
   }
 

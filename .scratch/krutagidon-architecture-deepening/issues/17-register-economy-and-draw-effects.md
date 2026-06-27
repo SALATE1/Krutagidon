@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: Done
 Label: ready-for-agent
 Type: AFK
 
@@ -16,13 +16,19 @@ Type: AFK
 
 ## Acceptance criteria
 
-- [ ] `gain_chips`, `gain_chips_per_player_with_status` и `draw_cards` регистрируются в Effect Runtime Catalog.
-- [ ] Shape validation для этих effects больше не живет как отдельный whitelist в executable data-pack validation.
-- [ ] `gain_chips` сохраняет typed event log и не принимает нечисловой или неположительный amount.
-- [ ] `gain_chips_per_player_with_status` сохраняет Dingler-count behavior и отклоняет неподдержанный status.
-- [ ] `draw_cards` сохраняет текущий draw/shuffle behavior и event log amount.
-- [ ] Focused tests покрывают successful chip gain, status-based chip gain, draw, и invalid shape для одного из effects.
+- [x] `gain_chips`, `gain_chips_per_player_with_status` и `draw_cards` регистрируются в Effect Runtime Catalog.
+- [x] Shape validation для этих effects больше не живет как отдельный whitelist в executable data-pack validation.
+- [x] `gain_chips` сохраняет typed event log и не принимает нечисловой или неположительный amount.
+- [x] `gain_chips_per_player_with_status` сохраняет Dingler-count behavior и отклоняет неподдержанный status.
+- [x] `draw_cards` сохраняет текущий draw/shuffle behavior и event log amount.
+- [x] Focused tests покрывают successful chip gain, status-based chip gain, draw, и invalid shape для одного из effects.
 
 ## Blocked by
 
 - `.scratch/krutagidon-architecture-deepening/issues/15-consolidate-effect-runtime-catalog.md`
+
+## Verification
+
+- `npm test -- tests/validation.test.ts`
+- `npm test -- tests/action-loop.test.ts`
+- `npm run typecheck`

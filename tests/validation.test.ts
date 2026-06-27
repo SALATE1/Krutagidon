@@ -392,6 +392,47 @@ test("combat effects are registered and reject invalid shapes through runtime ha
   }
 });
 
+test("economy and draw effects are registered and reject invalid shapes through runtime handlers", () => {
+  const effectIds = [
+    "gain_chips",
+    "gain_chips_per_player_with_status",
+    "draw_cards",
+  ];
+
+  for (const effectId of effectIds) {
+    assert.equal(getEffectRuntimeCatalogEntry(effectId)?.effectId, effectId);
+  }
+
+  assert.notDeepEqual(
+    getEffectRuntimeHandler("gain_chips")?.validateShape("Fixture", {
+      effectId: "gain_chips",
+      timing: "onPlay",
+      amount: 0,
+    }),
+    []
+  );
+  assert.notDeepEqual(
+    getEffectRuntimeHandler("draw_cards")?.validateShape("Fixture", {
+      effectId: "draw_cards",
+      timing: "onPlay",
+      amount: "1",
+    }),
+    []
+  );
+  assert.notDeepEqual(
+    getEffectRuntimeHandler("gain_chips_per_player_with_status")?.validateShape(
+      "Fixture",
+      {
+        effectId: "gain_chips_per_player_with_status",
+        timing: "onPlay",
+        amountPerPlayer: 1,
+        status: "wizard",
+      }
+    ),
+    []
+  );
+});
+
 test("combat data-pack validation rejects fixture effect ids", () => {
   const card = createFixtureCard("fixture-effect-in-combat-data");
   const dataPack = withOnlyFixtureCard({

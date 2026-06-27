@@ -641,6 +641,122 @@ const avoidAttackHandler: EffectRuntimeHandler = {
   },
 };
 
+const gainChipsHandler: EffectRuntimeHandler = {
+  effectId: "gain_chips",
+  validateShape(subjectId, effect) {
+    return validatePositiveIntegerAmount(subjectId, effect, "chip amount");
+  },
+  execute(state, player, effect, source) {
+    const amount = requirePositiveIntegerAmount(effect, "chip amount");
+    if (!amount.ok) {
+      return amount;
+    }
+
+    const chipsBefore = player.chips;
+    player.chips += amount.value;
+    recordEffectChipsChanged(
+      state,
+      player,
+      source,
+      "gain_chips",
+      chipsBefore,
+      player.chips
+    );
+
+    return { ok: true };
+  },
+};
+
+const gainChipsPerPlayerWithStatusHandler: EffectRuntimeHandler = {
+  effectId: "gain_chips_per_player_with_status",
+  validateShape(subjectId, effect) {
+    const errors: string[] = [];
+    const amountPerPlayer = effect["amountPerPlayer"];
+    if (
+      typeof amountPerPlayer !== "number" ||
+      !Number.isSafeInteger(amountPerPlayer) ||
+      amountPerPlayer <= 0
+    ) {
+      errors.push(
+        `${subjectId} uses invalid chip amount ${String(amountPerPlayer)}`
+      );
+    }
+
+    if (effect["status"] !== "dingler") {
+      errors.push(
+        `${subjectId} uses unsupported status ${String(effect["status"])}`
+      );
+    }
+
+    return errors;
+  },
+  execute(state, player, effect, source) {
+    const errors = gainChipsPerPlayerWithStatusHandler.validateShape(
+      "Effect gain_chips_per_player_with_status",
+      effect
+    );
+    if (errors.length > 0) {
+      return {
+        ok: false,
+        error: errors[0] ?? "Invalid gain_chips_per_player_with_status effect",
+      };
+    }
+
+    const amountPerPlayer = effect["amountPerPlayer"];
+    if (typeof amountPerPlayer !== "number" || effect["status"] !== "dingler") {
+      return {
+        ok: false,
+        error: "Invalid gain_chips_per_player_with_status effect",
+      };
+    }
+
+    const matchingPlayerCount = state.players.filter((candidate) => {
+      return candidate.statuses.some(
+        (candidateStatus) => candidateStatus.statusId === "dingler"
+      );
+    }).length;
+    const amount = matchingPlayerCount * amountPerPlayer;
+    const chipsBefore = player.chips;
+    player.chips += amount;
+    recordEffectChipsChanged(
+      state,
+      player,
+      source,
+      "gain_chips_per_player_with_status",
+      chipsBefore,
+      player.chips
+    );
+
+    return { ok: true };
+  },
+};
+
+const drawCardsHandler: EffectRuntimeHandler = {
+  effectId: "draw_cards",
+  validateShape(subjectId, effect) {
+    return validatePositiveIntegerAmount(subjectId, effect, "draw amount");
+  },
+  execute(state, player, effect, source) {
+    const amount = requirePositiveIntegerAmount(effect, "draw amount");
+    if (!amount.ok) {
+      return amount;
+    }
+
+    const drawnCount = drawCards(player, amount.value, state);
+    state.eventLog.push({
+      type: "effectDrawCardsApplied",
+      playerId: player.playerId,
+      cardInstanceId: source.cardInstanceId,
+      definitionId: source.definitionId,
+      effectId: "draw_cards",
+      amount: drawnCount,
+      sourceType: source.sourceType,
+    });
+
+    return { ok: true };
+  },
+};
+
 const directionalChainAttackHandler: EffectRuntimeHandler = {
   effectId: "directional_chain_attack",
   validateShape(subjectId, effect) {
@@ -1263,6 +1379,78 @@ function requirePositiveIntegerAmount(
   };
 }
 
+function recordEffectChipsChanged(
+  state: GameState,
+  player: PlayerState,
+  source: EffectSourceContext,
+  effectId: string,
+  chipsBefore: number,
+  chipsAfter: number
+): void {
+  state.eventLog.push({
+    type: "effectChipsGained",
+    playerId: player.playerId,
+    cardInstanceId: source.cardInstanceId,
+    definitionId: source.definitionId,
+    effectId,
+    chipsBefore,
+    chipsAfter,
+    amount: chipsAfter - chipsBefore,
+    sourceType: source.sourceType,
+  });
+}
+
+function drawCards(
+  player: PlayerState,
+  count: number,
+  state: GameState
+): number {
+  let drawnCount = 0;
+  for (let index = 0; index < count; index += 1) {
+    shuffleDiscardIntoDeckIfNeeded(player, state);
+
+    const card = player.deck.shift();
+    if (card === undefined) {
+      return drawnCount;
+    }
+
+    player.hand.push(card);
+    drawnCount += 1;
+  }
+
+  return drawnCount;
+}
+
+function shuffleDiscardIntoDeckIfNeeded(
+  player: PlayerState,
+  state: GameState
+): void {
+  if (player.deck.length > 0 || player.discard.length === 0) {
+    return;
+  }
+
+  player.deck.push(...player.discard.splice(0));
+  shuffleInPlace(player.deck, state);
+  state.eventLog.push({
+    type: "discardShuffledIntoDeck",
+    playerId: player.playerId,
+  });
+}
+
+function shuffleInPlace<T>(items: T[], state: GameState): void {
+  for (let index = items.length - 1; index > 0; index -= 1) {
+    const swapIndex = state.rng.nextInt(index + 1);
+    const item = items[index];
+    const swapItem = items[swapIndex];
+    if (item === undefined || swapItem === undefined) {
+      throw new Error("Unexpected sparse array during shuffle");
+    }
+
+    items[index] = swapItem;
+    items[swapIndex] = item;
+  }
+}
+
 function isEffectRecord(effect: unknown): effect is Record<string, unknown> {
   return typeof effect === "object" && effect !== null;
 }
@@ -1275,6 +1463,12 @@ export const effectRuntimeCatalog = new Map<string, EffectRuntimeCatalogEntry>([
   [dealDamageHandler.effectId, toCatalogEntry(dealDamageHandler)],
   [attackDamageHandler.effectId, toCatalogEntry(attackDamageHandler)],
   [avoidAttackHandler.effectId, toCatalogEntry(avoidAttackHandler)],
+  [gainChipsHandler.effectId, toCatalogEntry(gainChipsHandler)],
+  [
+    gainChipsPerPlayerWithStatusHandler.effectId,
+    toCatalogEntry(gainChipsPerPlayerWithStatusHandler),
+  ],
+  [drawCardsHandler.effectId, toCatalogEntry(drawCardsHandler)],
   [
     directionalChainAttackHandler.effectId,
     toCatalogEntry(directionalChainAttackHandler),

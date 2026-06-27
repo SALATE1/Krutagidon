@@ -498,12 +498,9 @@ function isLegacyCompatibilityEffectId(
     effectId === "mayhem_each_player_discard_deck_then_destroy_from_discard" ||
     effectId === "reveal_top_card" ||
     effectId === "play_top_card" ||
-    effectId === "draw_cards" ||
     effectId === "wild_magic_choice" ||
     effectId === "play_top_card_from_foe_deck" ||
     effectId === "modify_effective_value" ||
-    effectId === "gain_chips" ||
-    effectId === "gain_chips_per_player_with_status" ||
     effectId === "gain_status" ||
     effectId === "remove_status" ||
     effectId === "toggle_status" ||
