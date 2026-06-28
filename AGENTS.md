@@ -115,12 +115,17 @@ Use CodeGraph first for structural codebase questions.
 Use the MCP `codegraph_explore` tool as the default graph entry point.
 Prefer one narrow explore call per issue before editing.
 
-Avoid repeated broad `codegraph_explore` calls over overlapping files.
-Avoid long keyword-bag queries unless necessary.
-Prefer natural-language flow questions or one exact symbol/file target.
+Do not use long keyword-bag queries.
+Prefer one natural-language flow question or one exact symbol/file target.
+
+Do not repeat broad `codegraph_explore` calls over overlapping files.
+If the first explore returns many files/symbols or says output was truncated, narrow immediately to one exact symbol, file, or behavior.
 
 Treat CodeGraph returned source as already read.
-Do not re-verify the same source with grep/read unless the file changed, the answer is stale, or the result is incomplete.
+Do not re-read the same source with grep/read unless the file changed, the answer is incomplete, or the result is suspicious.
+
+After CodeGraph identifies exact files/symbols, switch to targeted edits/tests.
+Do not use CodeGraph again for the same area unless blocked.
 
 If precise graph follow-up is needed after the first explore, prefer CodeGraph CLI commands through the shell rather than enabling extra MCP tools globally:
 
@@ -132,6 +137,21 @@ codegraph callees <symbol>
 codegraph impact <symbol>
 git diff --name-only | codegraph affected --stdin
 ```
+
+## Issue Session Budget
+
+For issue-scoped work, keep the session narrow.
+
+Read the exact issue/handoff first.
+Do not read every nested `AGENTS.md` proactively.
+Read nested `AGENTS.md` only when entering that directory for edits or when the task requires it.
+
+Prefer one focused test command before broad checks.
+Before commit, run the project-required checks once.
+
+Avoid repeating `npm test`, `npm run typecheck`, `prettier --check`, or diff/status commands unless files changed after the previous run.
+
+Do not start next-issue handoff in the same session unless the user explicitly asks.
 
 ## Issue-Driven Work
 
