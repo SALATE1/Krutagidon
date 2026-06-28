@@ -924,6 +924,65 @@ test("executable data-pack validation rejects unsupported effect ids", () => {
   );
 });
 
+test("topdeck gained card replacement validates supported and invalid shapes", () => {
+  assert.equal(
+    getEffectRuntimeCatalogEntry("topdeck_gained_card")?.effectId,
+    "topdeck_gained_card"
+  );
+
+  const dataPack = withFixtureToken({
+    schemaVersion: 1,
+    tokenId: "wizard-property-fixture-topdeck-validation",
+    runtimeSchema: "krutagidon.tokenDefinition.v0",
+    kind: "wizardProperty",
+    visible: {
+      textRu:
+        "Когда ты получаешь карту, можешь положить её на верх своей колоды.",
+    },
+    engine: {
+      mappingStatus: "fixture",
+      playableInV0: true,
+      effects: [
+        {
+          effectId: "topdeck_gained_card",
+          timing: "onGainCard",
+          optional: true,
+          cardTypes: ["creature"],
+        },
+        {
+          effectId: "topdeck_gained_card",
+          timing: "onPlay",
+          optional: true,
+          cardTypes: ["creature"],
+        },
+        {
+          effectId: "topdeck_gained_card",
+          timing: "onGainCard",
+          optional: true,
+          destination: "discard",
+          cardTypes: ["creature"],
+        },
+        {
+          effectId: "topdeck_gained_card",
+          timing: "onGainCard",
+          optional: true,
+          cardDefinitionIds: ["fixture-card"],
+        },
+      ],
+      unsupportedMechanics: [],
+    },
+  });
+
+  const result = validateExecutableDataPack(dataPack);
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.errors, [
+    "Token wizard-property-fixture-topdeck-validation uses unsupported topdeck-gained-card timing onPlay",
+    "Token wizard-property-fixture-topdeck-validation uses unsupported topdeck-gained-card destination discard",
+    "Token wizard-property-fixture-topdeck-validation uses unsupported topdeck-gained-card filter cardDefinitionIds",
+  ]);
+});
+
 test("executable data-pack validation rejects unsupported mechanics", () => {
   const card = createFixtureCard("fixture-unsupported-mechanic");
   const dataPack = withFixtureCard({

@@ -1150,6 +1150,59 @@ const setResurrectionLifeTotalHandler: EffectRuntimeHandler = {
   },
 };
 
+const topdeckGainedCardHandler: EffectRuntimeHandler = {
+  effectId: "topdeck_gained_card",
+  validateShape(subjectId, effect) {
+    const errors: string[] = [];
+    if (effect["timing"] !== "onGainCard") {
+      errors.push(
+        `${subjectId} uses unsupported topdeck-gained-card timing ${String(effect["timing"])}`
+      );
+    }
+
+    const destination = effect["destination"];
+    if (destination !== undefined && destination !== "deckTop") {
+      errors.push(
+        `${subjectId} uses unsupported topdeck-gained-card destination ${String(destination)}`
+      );
+    }
+
+    const cardTypes = effect["cardTypes"];
+    if (
+      cardTypes !== undefined &&
+      (!Array.isArray(cardTypes) ||
+        cardTypes.length === 0 ||
+        !cardTypes.every(isNonEmptyString))
+    ) {
+      errors.push(
+        `${subjectId} uses unsupported topdeck-gained-card filter cardTypes`
+      );
+    }
+
+    if (effect["isOngoing"] !== undefined && effect["isOngoing"] !== true) {
+      errors.push(
+        `${subjectId} uses unsupported topdeck-gained-card filter isOngoing`
+      );
+    }
+
+    for (const filterField of ["cardDefinitionIds", "cardKind"]) {
+      if (effect[filterField] !== undefined) {
+        errors.push(
+          `${subjectId} uses unsupported topdeck-gained-card filter ${filterField}`
+        );
+      }
+    }
+
+    return errors;
+  },
+  execute() {
+    return {
+      ok: false,
+      error: "topdeck_gained_card is a gained-card replacement effect",
+    };
+  },
+};
+
 const attackDamageHandler: EffectRuntimeHandler = {
   effectId: "attack_damage",
   validateShape(subjectId, effect) {
@@ -2614,6 +2667,7 @@ export const effectRuntimeCatalog = new Map<string, EffectRuntimeCatalogEntry>([
     setResurrectionLifeTotalHandler.effectId,
     toCatalogEntry(setResurrectionLifeTotalHandler),
   ],
+  [topdeckGainedCardHandler.effectId, toCatalogEntry(topdeckGainedCardHandler)],
   [attackDamageHandler.effectId, toCatalogEntry(attackDamageHandler)],
   [avoidAttackHandler.effectId, toCatalogEntry(avoidAttackHandler)],
   [gainChipsHandler.effectId, toCatalogEntry(gainChipsHandler)],
