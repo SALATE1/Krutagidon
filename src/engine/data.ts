@@ -486,7 +486,6 @@ function isLegacyCompatibilityEffectId(
   mode: "combat" | "fixture"
 ): boolean {
   return (
-    effectId === "mayhem_each_player_discard_deck_then_destroy_from_discard" ||
     effectId === "modify_effective_value" ||
     effectId === "topdeck_gained_card" ||
     effectId === "temporary_hand_limit_by_gained_card_type" ||
@@ -504,25 +503,6 @@ function validateLegacyCompatibilityEffectShape(
   effect: Record<string, unknown>,
   mode: "combat" | "fixture"
 ): string[] {
-  if (
-    effectId === "mayhem_each_player_discard_deck_then_destroy_from_discard"
-  ) {
-    const errors: string[] = [];
-    if (effect["timing"] !== "onMayhemResolve") {
-      errors.push(
-        `${subjectId} uses unsupported Mayhem timing ${String(effect["timing"])}`
-      );
-    }
-
-    if (effect["targetSelector"] !== "eachPlayerClockwiseFromActive") {
-      errors.push(
-        `${subjectId} uses unsupported Mayhem target ${String(effect["targetSelector"])}`
-      );
-    }
-
-    return errors;
-  }
-
   return [];
 }
 

@@ -949,6 +949,76 @@ const mayhemEachPlayerDiscardTopDeckDestroyHandler: EffectRuntimeHandler = {
   },
 };
 
+const mayhemEachPlayerDiscardDeckDestroyHandler: EffectRuntimeHandler = {
+  effectId: "mayhem_each_player_discard_deck_then_destroy_from_discard",
+  validateShape(subjectId, effect) {
+    return validateMayhemEachPlayerShape(subjectId, effect);
+  },
+  execute(state, _player, effect, source, services) {
+    const errors = mayhemEachPlayerDiscardDeckDestroyHandler.validateShape(
+      "Effect mayhem_each_player_discard_deck_then_destroy_from_discard",
+      effect
+    );
+    if (errors.length > 0) {
+      return {
+        ok: false,
+        error: errors[0] ?? "Invalid Mayhem discard-deck destroy effect",
+      };
+    }
+
+    const effectId = services.asString(effect["effectId"]);
+    for (const targetPlayer of services.getPlayersInActiveOrder(state)) {
+      const discardedCount = targetPlayer.deck.length;
+      targetPlayer.discard.push(...targetPlayer.deck.splice(0));
+      const destroyTarget = targetPlayer.discard[0];
+      if (destroyTarget !== undefined) {
+        const destination = services.getDestroyDestination(
+          state,
+          destroyTarget
+        );
+        if (!destination.ok) {
+          return destination;
+        }
+
+        if (
+          !services.moveCardToZonePreservingOwner(
+            state,
+            targetPlayer,
+            destroyTarget,
+            destination.zone,
+            destination.zoneName,
+            effectId,
+            source
+          )
+        ) {
+          return {
+            ok: false,
+            error: `Cannot destroy discarded card ${destroyTarget.instanceId}`,
+          };
+        }
+      }
+
+      state.eventLog.push({
+        type: "mayhemDeckDiscardedThenDiscardCardDestroyed",
+        playerId: targetPlayer.playerId,
+        cardInstanceId: source.cardInstanceId,
+        definitionId: source.definitionId,
+        ...(destroyTarget === undefined
+          ? {}
+          : {
+              targetCardInstanceId: destroyTarget.instanceId,
+              targetDefinitionId: destroyTarget.definitionId,
+            }),
+        effectId,
+        amount: discardedCount,
+        sourceType: source.sourceType,
+      });
+    }
+
+    return { ok: true };
+  },
+};
+
 const mayhemEachPlayerHandRedrawChoiceHandler: EffectRuntimeHandler = {
   effectId: "mayhem_each_player_choose_discard_hand_draw_or_take_damage",
   validateShape(subjectId, effect) {
@@ -2515,6 +2585,10 @@ export const effectRuntimeCatalog = new Map<string, EffectRuntimeCatalogEntry>([
   [
     mayhemEachPlayerDiscardTopDeckDestroyHandler.effectId,
     toCatalogEntry(mayhemEachPlayerDiscardTopDeckDestroyHandler),
+  ],
+  [
+    mayhemEachPlayerDiscardDeckDestroyHandler.effectId,
+    toCatalogEntry(mayhemEachPlayerDiscardDeckDestroyHandler),
   ],
   [
     mayhemEachPlayerHandRedrawChoiceHandler.effectId,

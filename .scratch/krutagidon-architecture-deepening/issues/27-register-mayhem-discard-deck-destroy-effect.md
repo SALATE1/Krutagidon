@@ -1,5 +1,5 @@
-Status: ready-for-agent
-Label: ready-for-agent
+Status: Done
+Label: done
 Type: AFK
 
 # Перенести Mayhem discard-deck destroy effect в Effect Runtime Catalog
@@ -16,12 +16,12 @@ Type: AFK
 
 ## Acceptance criteria
 
-- [ ] `mayhem_each_player_discard_deck_then_destroy_from_discard` регистрируется в Effect Runtime Catalog.
-- [ ] Validation отклоняет неподдержанные timing и targetSelector.
-- [ ] Effect сохраняет active-player order.
-- [ ] Deck-to-discard movement сохраняет ownerId и zones.
-- [ ] Destroy-from-discard использует текущий destroy destination path.
-- [ ] Focused tests покрывают successful discard-deck/destroy path и invalid shape.
+- [x] `mayhem_each_player_discard_deck_then_destroy_from_discard` регистрируется в Effect Runtime Catalog.
+- [x] Validation отклоняет неподдержанные timing и targetSelector.
+- [x] Effect сохраняет active-player order.
+- [x] Deck-to-discard movement сохраняет ownerId и zones.
+- [x] Destroy-from-discard использует текущий destroy destination path.
+- [x] Focused tests покрывают successful discard-deck/destroy path и invalid shape.
 
 ## Blocked by
 

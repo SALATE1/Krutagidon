@@ -588,6 +588,121 @@ test("Mayhem discards top deck cards and destroys them in active-player order", 
   assert.equal(thirdTopDeckCard.ownerId, thirdPlayer.playerId);
 });
 
+test("Mayhem discards each deck and destroys the first discard in active-player order", () => {
+  const state = initializeGame({ rootDir, seed: 60615, playerCount: 3 });
+  state.activePlayerId = "player-2";
+  const orderedPlayers = getPlayersInActiveOrder(state);
+  const [activePlayer, secondPlayer, thirdPlayer] = orderedPlayers;
+  assert.ok(activePlayer);
+  assert.ok(secondPlayer);
+  assert.ok(thirdPlayer);
+
+  const normalDefinition = createFixtureCardDefinition(
+    "fixture-mayhem-discard-deck-normal",
+    []
+  );
+  const mayhemDefinition = createFixtureCardDefinition(
+    "fixture-mayhem-discard-deck-destroy",
+    [
+      {
+        effectId: "mayhem_each_player_discard_deck_then_destroy_from_discard",
+        timing: "onMayhemResolve",
+        targetSelector: "eachPlayerClockwiseFromActive",
+      },
+    ],
+    { cardKind: "mayhem" }
+  );
+  state.cardDefinitions = new Map([
+    ...state.cardDefinitions,
+    [normalDefinition.cardId, normalDefinition],
+    [mayhemDefinition.cardId, mayhemDefinition],
+  ]);
+
+  const players = [activePlayer, secondPlayer, thirdPlayer];
+  const deckCards = players.map((player) => {
+    return [0, 1].map((cardIndex) => {
+      return {
+        instanceId: `fixture-discard-deck-${player.playerId}-${cardIndex}`,
+        definitionId: normalDefinition.cardId,
+        ownerId: player.playerId,
+        marketChips: 0,
+      } satisfies CardInstance;
+    });
+  });
+
+  for (const [playerIndex, player] of players.entries()) {
+    const cards = deckCards[playerIndex];
+    assert.ok(cards);
+    player.deck.splice(0, player.deck.length, ...cards);
+    player.discard.splice(0, player.discard.length);
+  }
+
+  const mayhem: CardInstance = {
+    instanceId: "fixture-mayhem-discard-deck-instance",
+    definitionId: mayhemDefinition.cardId,
+    ownerId: "common",
+    marketChips: 0,
+  };
+  state.common.market.splice(
+    0,
+    state.common.market.length,
+    ...state.common.market.slice(0, 4)
+  );
+  state.common.mainDeck.splice(0, state.common.mainDeck.length, mayhem);
+
+  const result = runMarketFlow(state, { mode: "turn" });
+
+  assert.equal(result.ok, true);
+  assert.deepEqual(
+    state.eventLog
+      .filter(
+        (event) => event.type === "mayhemDeckDiscardedThenDiscardCardDestroyed"
+      )
+      .map((event) => ({
+        playerId: event.playerId,
+        amount: event.amount,
+        targetCardInstanceId: event.targetCardInstanceId,
+      })),
+    [
+      {
+        playerId: activePlayer.playerId,
+        amount: 2,
+        targetCardInstanceId: deckCards[0]?.[0]?.instanceId,
+      },
+      {
+        playerId: secondPlayer.playerId,
+        amount: 2,
+        targetCardInstanceId: deckCards[1]?.[0]?.instanceId,
+      },
+      {
+        playerId: thirdPlayer.playerId,
+        amount: 2,
+        targetCardInstanceId: deckCards[2]?.[0]?.instanceId,
+      },
+    ]
+  );
+  assert.deepEqual(
+    state.common.destroyedPile.map((card) => card.instanceId),
+    [
+      deckCards[0]?.[0]?.instanceId,
+      deckCards[1]?.[0]?.instanceId,
+      deckCards[2]?.[0]?.instanceId,
+    ]
+  );
+
+  for (const [playerIndex, player] of players.entries()) {
+    const cards = deckCards[playerIndex];
+    assert.ok(cards);
+    assert.deepEqual(player.deck, []);
+    assert.deepEqual(
+      player.discard.map((card) => card.instanceId),
+      [cards[1]?.instanceId]
+    );
+    assert.equal(cards[0]?.ownerId, player.playerId);
+    assert.equal(cards[1]?.ownerId, player.playerId);
+  }
+});
+
 test("Mayhem hand-redraw choice discards hands and draws in active-player order", () => {
   const state = initializeGame({ rootDir, seed: 60615, playerCount: 3 });
   state.activePlayerId = "player-2";

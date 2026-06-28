@@ -360,7 +360,6 @@ function isSupportedMayhemRuntimeEffect(
     effectId === "set_life" ||
     effectId === "mega_mayhem_set_life" ||
     effectId === "mega_mayhem_each_player_toggle_dingler" ||
-    effectId === "mayhem_each_player_discard_deck_then_destroy_from_discard" ||
     effectId === "gain_chips_per_player_with_status" ||
     effectId === "reveal_top_card" ||
     effectId === "play_top_card" ||
@@ -431,57 +430,6 @@ function executeEffect(
       sourceType: source.sourceType,
     });
 
-    return { ok: true };
-  }
-
-  if (
-    effect["effectId"] ===
-    "mayhem_each_player_discard_deck_then_destroy_from_discard"
-  ) {
-    for (const targetPlayer of getPlayersInActiveOrder(state)) {
-      const discardedCount = targetPlayer.deck.length;
-      targetPlayer.discard.push(...targetPlayer.deck.splice(0));
-      const destroyTarget = targetPlayer.discard[0];
-      if (destroyTarget !== undefined) {
-        const destination = getDestroyDestination(state, destroyTarget);
-        if (!destination.ok) {
-          return destination;
-        }
-
-        if (
-          !moveCardToZonePreservingOwner(
-            state,
-            targetPlayer,
-            destroyTarget,
-            destination.zone,
-            destination.zoneName,
-            asString(effect["effectId"]),
-            source
-          )
-        ) {
-          return {
-            ok: false,
-            error: `Cannot destroy discarded card ${destroyTarget.instanceId}`,
-          };
-        }
-      }
-
-      state.eventLog.push({
-        type: "mayhemDeckDiscardedThenDiscardCardDestroyed",
-        playerId: targetPlayer.playerId,
-        cardInstanceId: source.cardInstanceId,
-        definitionId: source.definitionId,
-        ...(destroyTarget === undefined
-          ? {}
-          : {
-              targetCardInstanceId: destroyTarget.instanceId,
-              targetDefinitionId: destroyTarget.definitionId,
-            }),
-        effectId: asString(effect["effectId"]),
-        amount: discardedCount,
-        sourceType: source.sourceType,
-      });
-    }
     return { ok: true };
   }
 

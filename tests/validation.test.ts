@@ -637,6 +637,28 @@ test("Mayhem discard-top-deck destroy effect is registered and rejects invalid s
   );
 });
 
+test("Mayhem discard-deck destroy effect is registered and rejects invalid shape through runtime handler", () => {
+  const effectId = "mayhem_each_player_discard_deck_then_destroy_from_discard";
+
+  assert.equal(getEffectRuntimeCatalogEntry(effectId)?.effectId, effectId);
+  assert.deepEqual(
+    getEffectRuntimeHandler(effectId)?.validateShape("Fixture", {
+      effectId,
+      timing: "onMayhemResolve",
+      targetSelector: "eachPlayerClockwiseFromActive",
+    }),
+    []
+  );
+  assert.notDeepEqual(
+    getEffectRuntimeHandler(effectId)?.validateShape("Fixture", {
+      effectId,
+      timing: "onPlay",
+      targetSelector: "activePlayer",
+    }),
+    []
+  );
+});
+
 test("Mayhem hand-redraw choice effect is registered and rejects unsupported options through runtime handler", () => {
   const effectId = "mayhem_each_player_choose_discard_hand_draw_or_take_damage";
 
