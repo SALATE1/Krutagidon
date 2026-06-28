@@ -983,6 +983,73 @@ test("topdeck gained card replacement validates supported and invalid shapes", (
   ]);
 });
 
+test("temporary hand-limit effect validates supported and invalid shapes", () => {
+  const effectId = "temporary_hand_limit_by_gained_card_type";
+
+  assert.equal(getEffectRuntimeCatalogEntry(effectId)?.effectId, effectId);
+  assert.deepEqual(
+    getEffectRuntimeHandler(effectId)?.validateShape("Token", {
+      effectId,
+      timing: "endTurn",
+      amount: 1,
+      cardTypes: ["spell"],
+    }),
+    []
+  );
+
+  const dataPack = withFixtureToken({
+    schemaVersion: 1,
+    tokenId: "wizard-property-fixture-temporary-hand-limit-validation",
+    runtimeSchema: "krutagidon.tokenDefinition.v0",
+    kind: "wizardProperty",
+    visible: {
+      textRu: "За каждое полученное заклинание добери на 1 карту больше.",
+    },
+    engine: {
+      mappingStatus: "fixture",
+      playableInV0: true,
+      effects: [
+        {
+          effectId,
+          timing: "onGainCard",
+          amount: 1,
+          cardTypes: ["spell"],
+        },
+        {
+          effectId,
+          timing: "endTurn",
+          amount: 0,
+          cardTypes: ["spell"],
+        },
+        {
+          effectId,
+          timing: "endTurn",
+          amount: 1,
+          cardTypes: [],
+        },
+        {
+          effectId,
+          timing: "endTurn",
+          amount: 1,
+          cardTypes: ["spell"],
+          cardDefinitionIds: ["fixture-card"],
+        },
+      ],
+      unsupportedMechanics: [],
+    },
+  });
+
+  const result = validateExecutableDataPack(dataPack);
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.errors, [
+    "Token wizard-property-fixture-temporary-hand-limit-validation uses unsupported temporary-hand-limit timing onGainCard",
+    "Token wizard-property-fixture-temporary-hand-limit-validation uses invalid hand limit amount 0",
+    "Token wizard-property-fixture-temporary-hand-limit-validation uses unsupported temporary-hand-limit filter cardTypes",
+    "Token wizard-property-fixture-temporary-hand-limit-validation uses unsupported temporary-hand-limit filter cardDefinitionIds",
+  ]);
+});
+
 test("executable data-pack validation rejects unsupported mechanics", () => {
   const card = createFixtureCard("fixture-unsupported-mechanic");
   const dataPack = withFixtureCard({

@@ -487,7 +487,6 @@ function isLegacyCompatibilityEffectId(
 ): boolean {
   return (
     effectId === "modify_effective_value" ||
-    effectId === "temporary_hand_limit_by_gained_card_type" ||
     effectId === "modify_owned_wand_attack_damage" ||
     effectId === "prevent_defense_against_owned_wand_attacks" ||
     (mode === "fixture" &&

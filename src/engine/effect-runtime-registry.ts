@@ -1203,6 +1203,50 @@ const topdeckGainedCardHandler: EffectRuntimeHandler = {
   },
 };
 
+const temporaryHandLimitByGainedCardTypeHandler: EffectRuntimeHandler = {
+  effectId: "temporary_hand_limit_by_gained_card_type",
+  validateShape(subjectId, effect) {
+    const errors: string[] = [];
+    if (effect["timing"] !== "endTurn") {
+      errors.push(
+        `${subjectId} uses unsupported temporary-hand-limit timing ${String(effect["timing"])}`
+      );
+    }
+
+    errors.push(
+      ...validatePositiveIntegerAmount(subjectId, effect, "hand limit amount")
+    );
+
+    const cardTypes = effect["cardTypes"];
+    if (
+      !Array.isArray(cardTypes) ||
+      cardTypes.length === 0 ||
+      !cardTypes.every(isNonEmptyString)
+    ) {
+      errors.push(
+        `${subjectId} uses unsupported temporary-hand-limit filter cardTypes`
+      );
+    }
+
+    for (const filterField of ["cardDefinitionIds", "cardKind", "isOngoing"]) {
+      if (effect[filterField] !== undefined) {
+        errors.push(
+          `${subjectId} uses unsupported temporary-hand-limit filter ${filterField}`
+        );
+      }
+    }
+
+    return errors;
+  },
+  execute() {
+    return {
+      ok: false,
+      error:
+        "temporary_hand_limit_by_gained_card_type is an end-turn hand-limit effect",
+    };
+  },
+};
+
 const attackDamageHandler: EffectRuntimeHandler = {
   effectId: "attack_damage",
   validateShape(subjectId, effect) {
@@ -2668,6 +2712,10 @@ export const effectRuntimeCatalog = new Map<string, EffectRuntimeCatalogEntry>([
     toCatalogEntry(setResurrectionLifeTotalHandler),
   ],
   [topdeckGainedCardHandler.effectId, toCatalogEntry(topdeckGainedCardHandler)],
+  [
+    temporaryHandLimitByGainedCardTypeHandler.effectId,
+    toCatalogEntry(temporaryHandLimitByGainedCardTypeHandler),
+  ],
   [attackDamageHandler.effectId, toCatalogEntry(attackDamageHandler)],
   [avoidAttackHandler.effectId, toCatalogEntry(avoidAttackHandler)],
   [gainChipsHandler.effectId, toCatalogEntry(gainChipsHandler)],
