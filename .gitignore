@@ -1,6 +1,8 @@
 node_modules/
 dist/
-assets/
+assets/*
+!assets/
+!assets/AGENTS.md
 .scratch/tmp/
 .scratch/tmp_*
 .scratch/runs/
