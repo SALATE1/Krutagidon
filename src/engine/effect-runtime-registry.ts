@@ -104,6 +104,7 @@ export interface EffectRuntimeServices {
     state: GameState,
     player: PlayerState
   ): PlayerState[];
+  getPlayersInActiveOrder(state: GameState): PlayerState[];
   getWizardPropertyAttackProfile(
     state: GameState,
     player: PlayerState,
@@ -743,6 +744,71 @@ const toggleStatusHandler: EffectRuntimeHandler = {
           source
         );
       }
+    }
+
+    return { ok: true };
+  },
+};
+
+const megaMayhemSetLifeHandler: EffectRuntimeHandler = {
+  effectId: "mega_mayhem_set_life",
+  validateShape(subjectId, effect) {
+    return validateMegaMayhemSetLifeEffectShape(subjectId, effect);
+  },
+  execute(state, player, effect, source, services) {
+    const lifeTotal = effect["lifeTotal"];
+    if (
+      typeof lifeTotal !== "number" ||
+      !Number.isSafeInteger(lifeTotal) ||
+      lifeTotal < 1
+    ) {
+      return {
+        ok: false,
+        error: `Invalid life total ${String(lifeTotal)}`,
+      };
+    }
+
+    for (const targetPlayer of services.getPlayersInActiveOrder(state)) {
+      services.setPlayerLife(state, targetPlayer, lifeTotal);
+      state.eventLog.push({
+        type: "effectLifeSet",
+        playerId: player.playerId,
+        targetPlayerId: targetPlayer.playerId,
+        cardInstanceId: source.cardInstanceId,
+        definitionId: source.definitionId,
+        effectId: services.asString(effect["effectId"]),
+        amount: lifeTotal,
+        sourceType: source.sourceType,
+      });
+    }
+
+    return { ok: true };
+  },
+};
+
+const megaMayhemEachPlayerToggleDinglerHandler: EffectRuntimeHandler = {
+  effectId: "mega_mayhem_each_player_toggle_dingler",
+  validateShape(subjectId, effect) {
+    return validateMegaMayhemEachPlayerToggleDinglerShape(subjectId, effect);
+  },
+  execute(state, _player, effect, source, services) {
+    for (const targetPlayer of services.getPlayersInActiveOrder(state)) {
+      if (services.hasDinglerStatus(targetPlayer)) {
+        services.removeDinglerStatus(
+          state,
+          targetPlayer,
+          services.asString(effect["effectId"]),
+          source
+        );
+        continue;
+      }
+
+      services.gainDinglerStatus(
+        state,
+        targetPlayer,
+        services.asString(effect["effectId"]),
+        source
+      );
     }
 
     return { ok: true };
@@ -1591,6 +1657,53 @@ function validateDinglerStatusEffectShape(
   return errors;
 }
 
+function validateMegaMayhemSetLifeEffectShape(
+  subjectId: string,
+  effect: Record<string, unknown>
+): string[] {
+  const errors = validateMegaMayhemEachPlayerShape(subjectId, effect);
+  const lifeTotal = effect["lifeTotal"];
+  if (
+    typeof lifeTotal !== "number" ||
+    !Number.isSafeInteger(lifeTotal) ||
+    lifeTotal < 1
+  ) {
+    errors.push(`${subjectId} uses invalid life total ${String(lifeTotal)}`);
+  }
+  return errors;
+}
+
+function validateMegaMayhemEachPlayerToggleDinglerShape(
+  subjectId: string,
+  effect: Record<string, unknown>
+): string[] {
+  const errors = validateMegaMayhemEachPlayerShape(subjectId, effect);
+  if (effect["statusId"] !== undefined) {
+    errors.push(
+      `${subjectId} uses unsupported status ${String(effect["statusId"])}`
+    );
+  }
+  return errors;
+}
+
+function validateMegaMayhemEachPlayerShape(
+  subjectId: string,
+  effect: Record<string, unknown>
+): string[] {
+  const errors: string[] = [];
+  if (effect["timing"] !== "onMayhemResolve") {
+    errors.push(
+      `${subjectId} uses unsupported MegaMayhem timing ${String(effect["timing"])}`
+    );
+  }
+  if (effect["targetSelector"] !== "eachPlayerClockwiseFromActive") {
+    errors.push(
+      `${subjectId} uses unsupported MegaMayhem target ${String(effect["targetSelector"])}`
+    );
+  }
+  return errors;
+}
+
 function payOptionalCosts(
   state: GameState,
   player: PlayerState,
@@ -2016,6 +2129,11 @@ export const effectRuntimeCatalog = new Map<string, EffectRuntimeCatalogEntry>([
   [gainStatusHandler.effectId, toCatalogEntry(gainStatusHandler)],
   [removeStatusHandler.effectId, toCatalogEntry(removeStatusHandler)],
   [toggleStatusHandler.effectId, toCatalogEntry(toggleStatusHandler)],
+  [megaMayhemSetLifeHandler.effectId, toCatalogEntry(megaMayhemSetLifeHandler)],
+  [
+    megaMayhemEachPlayerToggleDinglerHandler.effectId,
+    toCatalogEntry(megaMayhemEachPlayerToggleDinglerHandler),
+  ],
   [attackDamageHandler.effectId, toCatalogEntry(attackDamageHandler)],
   [avoidAttackHandler.effectId, toCatalogEntry(avoidAttackHandler)],
   [gainChipsHandler.effectId, toCatalogEntry(gainChipsHandler)],

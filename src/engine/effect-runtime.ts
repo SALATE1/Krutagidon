@@ -440,38 +440,6 @@ function executeEffect(
   }
 
   if (
-    effect["effectId"] === "mega_mayhem_set_life" &&
-    effect["targetSelector"] === "eachPlayerClockwiseFromActive"
-  ) {
-    const lifeTotal = effect["lifeTotal"];
-    if (
-      typeof lifeTotal !== "number" ||
-      !Number.isSafeInteger(lifeTotal) ||
-      lifeTotal < 1
-    ) {
-      return {
-        ok: false,
-        error: `Invalid life total ${String(lifeTotal)}`,
-      };
-    }
-
-    for (const targetPlayer of getPlayersInActiveOrder(state)) {
-      setPlayerLife(state, targetPlayer, lifeTotal);
-      state.eventLog.push({
-        type: "effectLifeSet",
-        playerId: player.playerId,
-        targetPlayerId: targetPlayer.playerId,
-        cardInstanceId: source.cardInstanceId,
-        definitionId: source.definitionId,
-        effectId: asString(effect["effectId"]),
-        amount: lifeTotal,
-        sourceType: source.sourceType,
-      });
-    }
-    return { ok: true };
-  }
-
-  if (
     effect["effectId"] ===
     "mega_mayhem_each_player_destroy_top_main_deck_death_if_mayhem"
   ) {
@@ -512,28 +480,6 @@ function executeEffect(
       if (destroyedDefinition?.engine.cardKind === "mayhem") {
         resolvePlayerDeath(state, targetPlayer, undefined);
       }
-    }
-    return { ok: true };
-  }
-
-  if (effect["effectId"] === "mega_mayhem_each_player_toggle_dingler") {
-    for (const targetPlayer of getPlayersInActiveOrder(state)) {
-      if (hasDinglerStatus(targetPlayer)) {
-        removeDinglerStatus(
-          state,
-          targetPlayer,
-          asString(effect["effectId"]),
-          source
-        );
-        continue;
-      }
-
-      gainDinglerStatus(
-        state,
-        targetPlayer,
-        asString(effect["effectId"]),
-        source
-      );
     }
     return { ok: true };
   }
@@ -1013,6 +959,7 @@ const effectRuntimeServices: EffectRuntimeServices = {
   moveCardToZonePreservingOwner,
   getDestroyDestination,
   getOpponentsInSeatingOrder,
+  getPlayersInActiveOrder,
   getWizardPropertyAttackProfile,
   chooseEffectChoice,
   dealDamage,

@@ -538,6 +538,57 @@ test("life and Dingler status effects are registered and reject invalid shapes t
   }
 });
 
+test("Mega Mayhem life and Dingler status effects are registered and reject invalid shapes through runtime handlers", () => {
+  const effectIds = [
+    "mega_mayhem_set_life",
+    "mega_mayhem_each_player_toggle_dingler",
+  ];
+
+  for (const effectId of effectIds) {
+    assert.equal(getEffectRuntimeCatalogEntry(effectId)?.effectId, effectId);
+  }
+
+  assert.deepEqual(
+    getEffectRuntimeHandler("mega_mayhem_set_life")?.validateShape("Fixture", {
+      effectId: "mega_mayhem_set_life",
+      timing: "onMayhemResolve",
+      lifeTotal: 5,
+      targetSelector: "eachPlayerClockwiseFromActive",
+    }),
+    []
+  );
+  assert.notDeepEqual(
+    getEffectRuntimeHandler("mega_mayhem_set_life")?.validateShape("Fixture", {
+      effectId: "mega_mayhem_set_life",
+      timing: "onPlay",
+      lifeTotal: 0,
+      targetSelector: "activePlayer",
+    }),
+    []
+  );
+  assert.deepEqual(
+    getEffectRuntimeHandler(
+      "mega_mayhem_each_player_toggle_dingler"
+    )?.validateShape("Fixture", {
+      effectId: "mega_mayhem_each_player_toggle_dingler",
+      timing: "onMayhemResolve",
+      targetSelector: "eachPlayerClockwiseFromActive",
+    }),
+    []
+  );
+  assert.notDeepEqual(
+    getEffectRuntimeHandler(
+      "mega_mayhem_each_player_toggle_dingler"
+    )?.validateShape("Fixture", {
+      effectId: "mega_mayhem_each_player_toggle_dingler",
+      timing: "onPlay",
+      targetSelector: "activePlayer",
+      statusId: "wizard",
+    }),
+    []
+  );
+});
+
 test("combat data-pack validation rejects fixture effect ids", () => {
   const card = createFixtureCard("fixture-effect-in-combat-data");
   const dataPack = withOnlyFixtureCard({

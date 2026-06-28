@@ -283,6 +283,88 @@ test("megaMayhem revealed during Market Flow executes its mapped onMayhemResolve
   );
 });
 
+test("megaMayhem Dingler toggle resolves for each player in active-player order", () => {
+  const state = initializeGame({ rootDir, seed: 60615, playerCount: 3 });
+  state.activePlayerId = "player-2";
+  const orderedPlayers = getPlayersInActiveOrder(state);
+  const [activePlayer, secondPlayer, thirdPlayer] = orderedPlayers;
+  assert.ok(activePlayer);
+  assert.ok(secondPlayer);
+  assert.ok(thirdPlayer);
+  activePlayer.life.current = 20;
+  secondPlayer.life.current = 20;
+  thirdPlayer.life.current = 20;
+  activePlayer.statuses.push({
+    instanceId: "fixture-active-dingler-status",
+    statusId: "dingler",
+    ownerId: activePlayer.playerId,
+    effects: [],
+  });
+
+  const megaMayhemDefinition = createFixtureCardDefinition(
+    "fixture-mega-mayhem-toggle-dingler",
+    [
+      {
+        effectId: "mega_mayhem_each_player_toggle_dingler",
+        timing: "onMayhemResolve",
+        targetSelector: "eachPlayerClockwiseFromActive",
+      },
+    ],
+    { cardKind: "megaMayhem" }
+  );
+  state.cardDefinitions = new Map([
+    ...state.cardDefinitions,
+    [megaMayhemDefinition.cardId, megaMayhemDefinition],
+  ]);
+  const megaMayhem: CardInstance = {
+    instanceId: "fixture-mega-mayhem-toggle-dingler-instance",
+    definitionId: megaMayhemDefinition.cardId,
+    ownerId: "common",
+    marketChips: 0,
+  };
+  const legendFiller = state.common.legendMarket[0];
+  assert.ok(legendFiller);
+  state.common.legendMarket.splice(
+    0,
+    state.common.legendMarket.length,
+    ...state.common.legendMarket.slice(0, 2)
+  );
+  state.common.legendDeck.splice(
+    0,
+    state.common.legendDeck.length,
+    megaMayhem,
+    legendFiller
+  );
+
+  const result = runMarketFlow(state, { mode: "turn" });
+
+  assert.equal(result.ok, true);
+  assert.equal(
+    activePlayer.statuses.some((status) => status.statusId === "dingler"),
+    false
+  );
+  assert.equal(activePlayer.life.current, 20);
+  for (const targetPlayer of [secondPlayer, thirdPlayer]) {
+    assert.equal(
+      targetPlayer.statuses.filter((status) => status.statusId === "dingler")
+        .length,
+      1
+    );
+    assert.equal(targetPlayer.life.current, 15);
+  }
+  assertEventOrder(state, [
+    (event) =>
+      event.type === "dinglerStatusRemoved" &&
+      event.playerId === activePlayer.playerId,
+    (event) =>
+      event.type === "dinglerStatusGained" &&
+      event.playerId === secondPlayer.playerId,
+    (event) =>
+      event.type === "dinglerStatusGained" &&
+      event.playerId === thirdPlayer.playerId,
+  ]);
+});
+
 test("mayhem revealed during Market Flow resolves and Market Flow continues with the next normal card", () => {
   const state = initializeGame({ rootDir, seed: 60615 });
   const mayhemDefinition = createFixtureCardDefinition(

@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: Done
 Label: ready-for-agent
 Type: AFK
 
@@ -16,12 +16,12 @@ Type: AFK
 
 ## Acceptance criteria
 
-- [ ] `mega_mayhem_set_life` и `mega_mayhem_each_player_toggle_dingler` регистрируются в Effect Runtime Catalog.
-- [ ] Validation отклоняет неподдержанные timing, targetSelector, lifeTotal и Dingler status fields.
-- [ ] `mega_mayhem_set_life` сохраняет active-player order и event log для каждого player.
-- [ ] `mega_mayhem_each_player_toggle_dingler` сохраняет текущую логику gain/remove Dingler для каждого player.
-- [ ] Existing Mayhem tests для этих двух effects продолжают проходить без массовой правки runtime JSON.
-- [ ] Focused tests покрывают successful set-life, successful toggle-Dingler и invalid Mega Mayhem shape.
+- [x] `mega_mayhem_set_life` и `mega_mayhem_each_player_toggle_dingler` регистрируются в Effect Runtime Catalog.
+- [x] Validation отклоняет неподдержанные timing, targetSelector, lifeTotal и Dingler status fields.
+- [x] `mega_mayhem_set_life` сохраняет active-player order и event log для каждого player.
+- [x] `mega_mayhem_each_player_toggle_dingler` сохраняет текущую логику gain/remove Dingler для каждого player.
+- [x] Existing Mayhem tests для этих двух effects продолжают проходить без массовой правки runtime JSON.
+- [x] Focused tests покрывают successful set-life, successful toggle-Dingler и invalid Mega Mayhem shape.
 
 ## Blocked by
 

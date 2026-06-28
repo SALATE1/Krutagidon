@@ -486,10 +486,8 @@ function isLegacyCompatibilityEffectId(
   mode: "combat" | "fixture"
 ): boolean {
   return (
-    effectId === "mega_mayhem_set_life" ||
     effectId ===
       "mega_mayhem_each_player_destroy_top_main_deck_death_if_mayhem" ||
-    effectId === "mega_mayhem_each_player_toggle_dingler" ||
     effectId ===
       "mayhem_each_player_discard_top_deck_cards_choose_destroy_all_or_none" ||
     effectId === "mayhem_each_player_choose_discard_hand_draw_or_take_damage" ||
@@ -516,36 +514,9 @@ function validateLegacyCompatibilityEffectShape(
   effect: Record<string, unknown>,
   mode: "combat" | "fixture"
 ): string[] {
-  if (effectId === "mega_mayhem_set_life") {
-    const errors: string[] = [];
-    const lifeTotal = effect["lifeTotal"];
-    if (
-      typeof lifeTotal !== "number" ||
-      !Number.isSafeInteger(lifeTotal) ||
-      lifeTotal < 1
-    ) {
-      errors.push(`${subjectId} uses invalid life total ${String(lifeTotal)}`);
-    }
-
-    if (effect["timing"] !== "onMayhemResolve") {
-      errors.push(
-        `${subjectId} uses unsupported MegaMayhem timing ${String(effect["timing"])}`
-      );
-    }
-
-    if (effect["targetSelector"] !== "eachPlayerClockwiseFromActive") {
-      errors.push(
-        `${subjectId} uses unsupported MegaMayhem target ${String(effect["targetSelector"])}`
-      );
-    }
-
-    return errors;
-  }
-
   if (
     effectId ===
       "mega_mayhem_each_player_destroy_top_main_deck_death_if_mayhem" ||
-    effectId === "mega_mayhem_each_player_toggle_dingler" ||
     effectId ===
       "mayhem_each_player_discard_top_deck_cards_choose_destroy_all_or_none" ||
     effectId === "mayhem_each_player_choose_discard_hand_draw_or_take_damage" ||
