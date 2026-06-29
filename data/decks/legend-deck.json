@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "deckId": "v0-legend-deck-first-batch",
+  "deckId": "legend-deck",
   "runtimeSchema": "krutagidon.deckComposition.v0",
   "role": "legendDeck",
-  "mappingStatus": "supported-first-batch-fixture",
+  "mappingStatus": "incomplete-full-only",
   "entries": [
     {
       "cardId": "esw2_dbg__legend_001",
@@ -31,6 +31,6 @@
     }
   ],
   "notes": [
-    "First-batch fixture deck. Excludes partial cards esw2_dbg__main_022, esw2_dbg__legend_004, esw2_dbg__legend_005, esw2_dbg__legend_007, esw2_dbg__legend_008, esw2_dbg__legend_010, and esw2_dbg__legend_011."
+    "Current runtime deck. Excludes cards without full supported runtime coverage."
   ]
 }

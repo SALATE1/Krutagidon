@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "deckId": "v0-main-deck-first-batch",
+  "deckId": "main-deck",
   "runtimeSchema": "krutagidon.deckComposition.v0",
   "role": "mainDeck",
-  "mappingStatus": "supported-first-batch-fixture",
+  "mappingStatus": "incomplete-full-only",
   "entries": [
     {
       "cardId": "esw2_dbg__main_001",
@@ -59,6 +59,6 @@
     }
   ],
   "notes": [
-    "First-batch fixture deck. Excludes partial cards esw2_dbg__main_002, esw2_dbg__main_004, esw2_dbg__main_005, esw2_dbg__main_006, esw2_dbg__main_007, esw2_dbg__main_010, esw2_dbg__main_013, esw2_dbg__main_016, esw2_dbg__main_017, esw2_dbg__main_018, and esw2_dbg__main_019."
+    "Current runtime deck. Excludes cards without full supported runtime coverage."
   ]
 }

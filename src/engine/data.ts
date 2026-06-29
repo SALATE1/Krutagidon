@@ -112,6 +112,7 @@ export interface DataPackManifest {
   schemaVersion: number;
   packId: string;
   runtimeSchema: "krutagidon.dataPack.v0";
+  mappingStatus: string;
   cardDefinitionPaths: string[];
   tokenDefinitionPaths?: string[];
   decks?: {
@@ -164,9 +165,9 @@ export interface DataPackValidationOptions {
   mode?: EffectRuntimeMode;
 }
 
-export function loadV0DataPack(
+export function loadCurrentRuntimeDataPack(
   rootDir: string,
-  manifestPath = "data/packs/v0-first-batch.json"
+  manifestPath = "data/packs/current-runtime.json"
 ): LoadedDataPack {
   const manifest = readJsonFile<DataPackManifest>(rootDir, manifestPath);
   const cardDefinitions = loadCardDefinitions(rootDir, manifest);
@@ -218,6 +219,14 @@ export function loadV0DataPack(
             ),
     },
   };
+}
+
+/** @deprecated Use loadCurrentRuntimeDataPack. */
+export function loadV0DataPack(
+  rootDir: string,
+  manifestPath = "data/packs/current-runtime.json"
+): LoadedDataPack {
+  return loadCurrentRuntimeDataPack(rootDir, manifestPath);
 }
 
 export function validateExecutableDataPack(

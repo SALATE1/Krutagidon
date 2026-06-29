@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "deckId": "v0-starter-deck",
+  "deckId": "starter-deck",
   "runtimeSchema": "krutagidon.deckComposition.v0",
   "role": "starterDeckTemplate",
   "mappingStatus": "supported",

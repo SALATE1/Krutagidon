@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "stackId": "v0-wild-magic-stack",
+  "stackId": "wild-magic-stack",
   "runtimeSchema": "krutagidon.stackComposition.v0",
   "role": "wildMagicStack",
   "objectType": "card",

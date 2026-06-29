@@ -1,27 +1,27 @@
 {
   "schemaVersion": 1,
-  "packId": "v0-first-batch-playable-data-pack",
+  "packId": "current-runtime-data-pack",
   "runtimeSchema": "krutagidon.dataPack.v0",
-  "mappingStatus": "supported-first-batch-v0",
+  "mappingStatus": "incomplete-full-only",
   "tokenDefinitionPaths": [
     "data/tokens/dead-wizard",
     "data/tokens/wizard-property"
   ],
   "decks": {
-    "starterDeck": "data/decks/v0-starter-deck.json",
-    "mainDeck": "data/decks/v0-main-deck-first-batch.json",
-    "legendDeck": "data/decks/v0-legend-deck-first-batch.json"
+    "starterDeck": "data/decks/starter-deck.json",
+    "mainDeck": "data/decks/main-deck.json",
+    "legendDeck": "data/decks/legend-deck.json"
   },
   "cardStacks": {
-    "wildMagicStack": "data/stacks/cards/v0-wild-magic-stack.json",
-    "limpWandStack": "data/stacks/cards/v0-limp-wand-stack.json"
+    "wildMagicStack": "data/stacks/cards/wild-magic-stack.json",
+    "limpWandStack": "data/stacks/cards/limp-wand-stack.json"
   },
   "tokenStacks": {
     "deadWizardTokens": "data/stacks/tokens/v0-dead-wizard-token-stack.json",
     "wizardProperties": "data/stacks/tokens/v0-wizard-property-stack.json"
   },
   "pools": {
-    "familiarPool": "data/pools/v0-familiar-pool.json"
+    "familiarPool": "data/pools/familiar-pool.json"
   },
   "counts": {
     "mapped": 39,
@@ -58,7 +58,7 @@
   "needsData": [],
   "notes": [
     "Runtime-поведение карт закодировано явными effectId objects; engine не должен парсить visible.textRu во время партии.",
-    "v0 main/legend decks являются first-batch fixture: они используют только supported карты и исключают partial mappings."
+    "Current runtime main/legend decks use only supported cards and exclude partial mappings."
   ],
   "cardDefinitionPaths": [
     "data/cards/main",

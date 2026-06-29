@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "deckId": "v0-familiar-pool",
+  "deckId": "familiar-pool",
   "runtimeSchema": "krutagidon.deckComposition.v0",
   "role": "familiarPool",
-  "mappingStatus": "v0-user-provided-placeholder",
+  "mappingStatus": "incomplete-full-only",
   "entries": [
     {
       "cardId": "esw2_dbg__familiar_001",

@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
-  "deckId": "v0-limp-wand-stack",
+  "deckId": "wild-magic-stack",
   "runtimeSchema": "krutagidon.deckComposition.v0",
-  "role": "limpWandStack",
+  "role": "wildMagicStack",
   "mappingStatus": "supported",
   "entries": [
     {
-      "cardId": "esw2_dbg__limp_wand",
+      "cardId": "esw2_dbg__wild_magic",
       "count": 15
     }
   ],

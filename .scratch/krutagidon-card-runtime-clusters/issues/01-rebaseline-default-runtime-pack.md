@@ -1,5 +1,5 @@
-Status: Ready
-Label: ready-for-agent
+Status: Done
+Label: done
 Type: AFK
 
 # Переназначить default runtime pack на current-runtime
@@ -23,16 +23,16 @@ Type: AFK
 
 ## Acceptance criteria
 
-- [ ] Runtime pack file переименован в `data/packs/current-runtime.json`.
-- [ ] Current composition files переименованы в `data/decks/main-deck.json`, `data/decks/legend-deck.json`, `data/decks/starter-deck.json`, `data/stacks/cards/wild-magic-stack.json`, `data/stacks/cards/limp-wand-stack.json`, `data/pools/familiar-pool.json`.
-- [ ] Manifest paths указывают только на current filenames.
-- [ ] Manifest использует `mappingStatus: "incomplete-full-only"`.
-- [ ] Default loader переименован с `loadV0DataPack` на current-runtime название, и production/test imports используют новое имя.
-- [ ] Старое loader имя не остаётся целевым API для нового кода; если alias нужен временно, он явно помечен совместимостью.
-- [ ] Docs/templates, затронутые default runtime pack naming, больше не называют current runtime `v0-first-batch`.
-- [ ] Current runtime pack загружается штатной командой/тестом.
-- [ ] `npm run typecheck` проходит.
-- [ ] `npm test` или focused tests, покрывающие data-pack loading/setup, проходят.
+- [x] Runtime pack file переименован в `data/packs/current-runtime.json`.
+- [x] Current composition files переименованы в `data/decks/main-deck.json`, `data/decks/legend-deck.json`, `data/decks/starter-deck.json`, `data/stacks/cards/wild-magic-stack.json`, `data/stacks/cards/limp-wand-stack.json`, `data/pools/familiar-pool.json`.
+- [x] Manifest paths указывают только на current filenames.
+- [x] Manifest использует `mappingStatus: "incomplete-full-only"`.
+- [x] Default loader переименован с `loadV0DataPack` на current-runtime название, и production/test imports используют новое имя.
+- [x] Старое loader имя не остаётся целевым API для нового кода; если alias нужен временно, он явно помечен совместимостью.
+- [x] Docs/templates, затронутые default runtime pack naming, больше не называют current runtime `v0-first-batch`.
+- [x] Current runtime pack загружается штатной командой/тестом.
+- [x] `npm run typecheck` проходит.
+- [x] `npm test` или focused tests, покрывающие data-pack loading/setup, проходят.
 
 ## Blocked by
 
@@ -42,3 +42,12 @@ None - can start immediately.
 
 - Не удалять `runtimeSchema: "krutagidon.*.v0"` и `playableInV0` в этом issue. Они остаются техническими legacy fields для отдельного cleanup slice.
 - Не менять card runtime mappings в этом issue, кроме путей/имен, необходимых для current-runtime baseline.
+
+## Verification
+
+- `npm run build -- --pretty false`
+- `node --test dist/tests/setup.test.js dist/tests/validation.test.js dist/tests/effective-values.test.js`
+- `npm run report:runtime-coverage`
+- `npm run typecheck`
+- `npm test`
+- `git diff --check`

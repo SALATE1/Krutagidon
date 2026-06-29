@@ -5,13 +5,13 @@
   "mappingStatus": "fixture",
   "cardDefinitionPaths": ["data/import/cards/main/drafts"],
   "decks": {
-    "starterDeck": "data/decks/v0-starter-deck.json",
-    "mainDeck": "data/decks/v0-main-deck-first-batch.json",
-    "legendDeck": "data/decks/v0-legend-deck-first-batch.json"
+    "starterDeck": "data/decks/starter-deck.json",
+    "mainDeck": "data/decks/main-deck.json",
+    "legendDeck": "data/decks/legend-deck.json"
   },
   "cardStacks": {
-    "wildMagicStack": "data/stacks/cards/v0-wild-magic-stack.json",
-    "limpWandStack": "data/stacks/cards/v0-limp-wand-stack.json"
+    "wildMagicStack": "data/stacks/cards/wild-magic-stack.json",
+    "limpWandStack": "data/stacks/cards/limp-wand-stack.json"
   },
   "needsData": []
 }

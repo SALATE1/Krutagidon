@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  loadCurrentRuntimeDataPack,
   loadV0DataPack,
   validateExecutableDataPack,
   type CardDefinition,
@@ -268,7 +269,7 @@ test("executable data-pack validation rejects invalid core movement effect shape
 test("supported executable attack and defense effects pass executable effect validation", () => {
   const attackCard = createFixtureCard("fixture-supported-attack-effect");
   const defenseCard = createFixtureCard("fixture-supported-defense-effect");
-  const dataPack = loadV0DataPack(rootDir);
+  const dataPack = loadCurrentRuntimeDataPack(rootDir);
   const attackDataPack: LoadedDataPack = {
     ...dataPack,
     cardDefinitions: new Map([
@@ -1425,7 +1426,7 @@ test("draft wizard property tokens are not treated as executable", () => {
 });
 
 test("executable data-pack validation rejects manifest references to import-only data", () => {
-  const dataPack = loadV0DataPack(rootDir);
+  const dataPack = loadCurrentRuntimeDataPack(rootDir);
   const result = validateExecutableDataPack({
     ...dataPack,
     manifest: {
@@ -1448,9 +1449,19 @@ test("executable data-pack validation rejects manifest references to import-only
 test("loader rejects import-only card definition paths before reading draft data", () => {
   assert.throws(
     () =>
-      loadV0DataPack(rootDir, "tests/fixtures/import-card-path-data-pack.json"),
+      loadCurrentRuntimeDataPack(
+        rootDir,
+        "tests/fixtures/import-card-path-data-pack.json"
+      ),
     /Manifest cardDefinitionPaths references import-only path data\/import\/cards\/main\/drafts/
   );
+});
+
+test("compatibility v0 loader delegates to current runtime manifest by default", () => {
+  const dataPack = loadV0DataPack(rootDir);
+
+  assert.equal(dataPack.manifest.packId, "current-runtime-data-pack");
+  assert.equal(dataPack.manifest.decks?.mainDeck, "data/decks/main-deck.json");
 });
 
 test("executable data-pack validation rejects unsupported play-top destinations", () => {
@@ -1520,7 +1531,7 @@ test("executable data-pack validation rejects redirect defense branches", () => 
 });
 
 function withFixtureCard(card: CardDefinition): LoadedDataPack {
-  const dataPack = loadV0DataPack(rootDir);
+  const dataPack = loadCurrentRuntimeDataPack(rootDir);
   return {
     ...dataPack,
     cardDefinitions: new Map([
@@ -1531,7 +1542,7 @@ function withFixtureCard(card: CardDefinition): LoadedDataPack {
 }
 
 function withOnlyFixtureCard(card: CardDefinition): LoadedDataPack {
-  const dataPack = loadV0DataPack(rootDir);
+  const dataPack = loadCurrentRuntimeDataPack(rootDir);
   return {
     ...dataPack,
     cardDefinitions: new Map([[card.cardId, card]]),
@@ -1539,7 +1550,7 @@ function withOnlyFixtureCard(card: CardDefinition): LoadedDataPack {
 }
 
 function withFixtureToken(token: TokenDefinition): LoadedDataPack {
-  const dataPack = loadV0DataPack(rootDir);
+  const dataPack = loadCurrentRuntimeDataPack(rootDir);
   return {
     ...dataPack,
     cardDefinitions: new Map(),

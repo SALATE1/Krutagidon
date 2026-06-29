@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "deckId": "v0-main-deck-first-batch",
+  "deckId": "main-deck",
   "runtimeSchema": "krutagidon.deckComposition.v0",
   "role": "mainDeck",
   "entries": [

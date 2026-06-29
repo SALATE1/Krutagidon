@@ -12,7 +12,11 @@ export type {
   TokenStackComposition,
   WizardPropertyDefinition,
 } from "./engine/data.js";
-export { loadV0DataPack, validateExecutableDataPack } from "./engine/data.js";
+export {
+  loadCurrentRuntimeDataPack,
+  loadV0DataPack,
+  validateExecutableDataPack,
+} from "./engine/data.js";
 export type {
   DraftValidationMessage,
   DraftValidationResult,

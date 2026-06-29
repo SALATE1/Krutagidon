@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "poolId": "v0-familiar-pool",
+  "poolId": "familiar-pool",
   "runtimeSchema": "krutagidon.poolComposition.v0",
   "role": "familiarPool",
   "objectType": "card",

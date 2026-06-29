@@ -1,5 +1,5 @@
 import {
-  loadV0DataPack,
+  loadCurrentRuntimeDataPack,
   type CardDefinition,
   type DeckComposition,
   type LoadedDataPack,
@@ -170,7 +170,7 @@ export function initializeGame(options: InitializeGameOptions): GameState {
   const dataPack =
     "dataPack" in options
       ? options.dataPack
-      : loadV0DataPack(options.rootDir, options.dataPackPath);
+      : loadCurrentRuntimeDataPack(options.rootDir, options.dataPackPath);
   const factory = createInstanceFactory();
   const tokenFactory = createTokenInstanceFactory();
 

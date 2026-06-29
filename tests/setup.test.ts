@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  loadCurrentRuntimeDataPack,
   initializeGame,
-  loadV0DataPack,
   scoreGame,
   type CardInstance,
   type GameState,
@@ -20,11 +20,39 @@ test("initial game setup is deterministic for the same seed", () => {
 });
 
 test("initial game setup can use a preloaded data pack", () => {
-  const dataPack = loadV0DataPack(rootDir);
+  const dataPack = loadCurrentRuntimeDataPack(rootDir);
   const fromFilesystem = initializeGame({ rootDir, seed: 60615 });
   const fromLoadedDataPack = initializeGame({ dataPack, seed: 60615 });
 
   assert.deepEqual(snapshot(fromLoadedDataPack), snapshot(fromFilesystem));
+});
+
+test("current runtime data pack uses current-runtime manifest and composition paths", () => {
+  const dataPack = loadCurrentRuntimeDataPack(rootDir);
+
+  assert.equal(dataPack.manifest.packId, "current-runtime-data-pack");
+  assert.equal(dataPack.manifest.mappingStatus, "incomplete-full-only");
+  assert.equal(
+    dataPack.manifest.decks?.starterDeck,
+    "data/decks/starter-deck.json"
+  );
+  assert.equal(dataPack.manifest.decks?.mainDeck, "data/decks/main-deck.json");
+  assert.equal(
+    dataPack.manifest.decks?.legendDeck,
+    "data/decks/legend-deck.json"
+  );
+  assert.equal(
+    dataPack.manifest.cardStacks?.wildMagicStack,
+    "data/stacks/cards/wild-magic-stack.json"
+  );
+  assert.equal(
+    dataPack.manifest.cardStacks?.limpWandStack,
+    "data/stacks/cards/limp-wand-stack.json"
+  );
+  assert.equal(
+    dataPack.manifest.pools?.familiarPool,
+    "data/pools/familiar-pool.json"
+  );
 });
 
 test("initial game setup creates expected player and common zones", () => {
@@ -87,8 +115,8 @@ test("dead wizard tokens left in setup draw stack do not score for players", () 
   }
 });
 
-test("v0 data pack loads the wizard property setup pool", () => {
-  const dataPack = loadV0DataPack(rootDir);
+test("current runtime data pack loads the wizard property setup pool", () => {
+  const dataPack = loadCurrentRuntimeDataPack(rootDir);
   const wizardPropertyStack = dataPack.tokenStacks.wizardProperties;
   const executableWizardProperties = new Set([
     "esw2_dbg__wizard_property_001",
@@ -132,7 +160,7 @@ test("wizard property setup choice is deterministic and seed-dependent", () => {
 });
 
 test("familiar-selection wizard property remains non-executable until familiar lifecycle exists", () => {
-  const dataPack = loadV0DataPack(rootDir);
+  const dataPack = loadCurrentRuntimeDataPack(rootDir);
   const definition = dataPack.tokenDefinitions.get(
     "esw2_dbg__wizard_property_003"
   );
@@ -182,7 +210,7 @@ test("starter deck definitions are independent physical instances per player", (
 
 test("wizard property setup replaces exactly one owned starter Sign with Hrenalocka Wand", () => {
   const dataPack = createWizardPropertySetupDataPack(
-    loadV0DataPack(rootDir),
+    loadCurrentRuntimeDataPack(rootDir),
     "esw2_dbg__wizard_property_009"
   );
   const state = initializeGame({ dataPack, seed: 777 });

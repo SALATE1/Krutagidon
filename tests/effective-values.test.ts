@@ -9,7 +9,7 @@ import {
   initializeGame,
   applyAction,
   listLegalActions,
-  loadV0DataPack,
+  loadCurrentRuntimeDataPack,
   scoreGame,
   type CardDefinition,
   type LoadedDataPack,
@@ -23,7 +23,9 @@ const rootDir = process.cwd();
 
 test("a controlled fixture object can modify a card's effective cost without mutating base data", () => {
   const state = initializeGame({ rootDir, seed: 60615 });
-  const player = state.players.find((candidate) => candidate.playerId === state.activePlayerId);
+  const player = state.players.find(
+    (candidate) => candidate.playerId === state.activePlayerId
+  );
   assert.ok(player);
   const marketCard = state.common.market[0];
   assert.ok(marketCard);
@@ -31,21 +33,33 @@ test("a controlled fixture object can modify a card's effective cost without mut
   assert.ok(definition);
   const baseCost = definition.engine.cost;
   state.turn.power = Math.max(0, baseCost - 2);
-  player.statuses.push(createCostModifierStatus(player.playerId, marketCard.definitionId, -2));
+  player.statuses.push(
+    createCostModifierStatus(player.playerId, marketCard.definitionId, -2)
+  );
 
-  const effectiveCost = calculateEffectiveCardCost(state, player.playerId, definition);
+  const effectiveCost = calculateEffectiveCardCost(
+    state,
+    player.playerId,
+    definition
+  );
   const legalActions = listLegalActions(state);
 
   assert.equal(effectiveCost, baseCost - 2);
   assert.equal(definition.engine.cost, baseCost);
   assert.ok(
-    legalActions.some((action) => action.type === "buyMarketCard" && action.cardInstanceId === marketCard.instanceId),
+    legalActions.some(
+      (action) =>
+        action.type === "buyMarketCard" &&
+        action.cardInstanceId === marketCard.instanceId
+    )
   );
 });
 
 test("omitting the controlled object removes the effective cost modifier", () => {
   const state = initializeGame({ rootDir, seed: 60615 });
-  const player = state.players.find((candidate) => candidate.playerId === state.activePlayerId);
+  const player = state.players.find(
+    (candidate) => candidate.playerId === state.activePlayerId
+  );
   assert.ok(player);
   const marketCard = state.common.market[0];
   assert.ok(marketCard);
@@ -54,14 +68,22 @@ test("omitting the controlled object removes the effective cost modifier", () =>
   const baseCost = definition.engine.cost;
   state.turn.power = Math.max(0, baseCost - 2);
 
-  const effectiveCost = calculateEffectiveCardCost(state, player.playerId, definition);
+  const effectiveCost = calculateEffectiveCardCost(
+    state,
+    player.playerId,
+    definition
+  );
   const legalActions = listLegalActions(state);
 
   assert.equal(effectiveCost, baseCost);
   assert.equal(definition.engine.cost, baseCost);
   assert.equal(
-    legalActions.some((action) => action.type === "buyMarketCard" && action.cardInstanceId === marketCard.instanceId),
-    state.turn.power >= baseCost,
+    legalActions.some(
+      (action) =>
+        action.type === "buyMarketCard" &&
+        action.cardInstanceId === marketCard.instanceId
+    ),
+    state.turn.power >= baseCost
   );
 });
 
@@ -78,8 +100,16 @@ test("controlled object view gathers separately stored cards, tokens, wizard pro
   assert.ok(token);
   token.ownerId = player.playerId;
   player.deadWizardTokens.push(token);
-  const status = createCostModifierStatus(player.playerId, permanent.definitionId, -1);
-  const trophy = createCostModifierTrophy(player.playerId, permanent.definitionId, -1);
+  const status = createCostModifierStatus(
+    player.playerId,
+    permanent.definitionId,
+    -1
+  );
+  const trophy = createCostModifierTrophy(
+    player.playerId,
+    permanent.definitionId,
+    -1
+  );
   player.statuses.push(status);
   player.trophyLikeObjects.push(trophy);
 
@@ -89,17 +119,23 @@ test("controlled object view gathers separately stored cards, tokens, wizard pro
     {
       cards: view.cards.map((object) => object.card.instanceId),
       tokens: view.tokens.map((object) => object.token.instanceId),
-      wizardProperties: view.wizardProperties.map((object) => object.token.instanceId),
+      wizardProperties: view.wizardProperties.map(
+        (object) => object.token.instanceId
+      ),
       statuses: view.statuses.map((object) => object.instanceId),
-      trophyLikeObjects: view.trophyLikeObjects.map((object) => object.instanceId),
+      trophyLikeObjects: view.trophyLikeObjects.map(
+        (object) => object.instanceId
+      ),
     },
     {
       cards: [permanent.instanceId],
       tokens: [token.instanceId],
-      wizardProperties: player.wizardProperties.map((object) => object.instanceId),
+      wizardProperties: player.wizardProperties.map(
+        (object) => object.instanceId
+      ),
       statuses: [status.instanceId],
       trophyLikeObjects: [trophy.instanceId],
-    },
+    }
   );
 });
 
@@ -115,12 +151,26 @@ test("a controlled fixture object can modify token scoring without mutating toke
   const definition = state.tokenDefinitions.get(token.definitionId);
   assert.equal(definition?.kind, "deadWizardToken");
   const baseVictoryPoints = definition.victoryPoints;
-  player.trophyLikeObjects.push(createTokenVictoryPointModifierTrophy(player.playerId, token.definitionId, 1));
+  player.trophyLikeObjects.push(
+    createTokenVictoryPointModifierTrophy(
+      player.playerId,
+      token.definitionId,
+      1
+    )
+  );
 
-  const expectedCardScore = [...player.hand, ...player.deck, ...player.discard].reduce((total, card) => {
-    return total + state.cardDefinitions.get(card.definitionId)!.engine.victoryPoints;
+  const expectedCardScore = [
+    ...player.hand,
+    ...player.deck,
+    ...player.discard,
+  ].reduce((total, card) => {
+    return (
+      total + state.cardDefinitions.get(card.definitionId)!.engine.victoryPoints
+    );
   }, 0);
-  const score = scoreGame(state).find((candidate) => candidate.playerId === player.playerId);
+  const score = scoreGame(state).find(
+    (candidate) => candidate.playerId === player.playerId
+  );
 
   assert.ok(score);
   assert.equal(score.victoryPoints, expectedCardScore + baseVictoryPoints + 1);
@@ -128,9 +178,23 @@ test("a controlled fixture object can modify token scoring without mutating toke
 });
 
 test("wizard property discount and scoring modifier apply to owned treasures", () => {
-  const treasure = createTypedFixtureCardDefinition("fixture-treasure", ["treasure"], 5, 2);
-  const spell = createTypedFixtureCardDefinition("fixture-spell", ["spell"], 5, 2);
-  const dataPack = createTreasureModifierDataPack(loadV0DataPack(rootDir), treasure, spell);
+  const treasure = createTypedFixtureCardDefinition(
+    "fixture-treasure",
+    ["treasure"],
+    5,
+    2
+  );
+  const spell = createTypedFixtureCardDefinition(
+    "fixture-spell",
+    ["spell"],
+    5,
+    2
+  );
+  const dataPack = createTreasureModifierDataPack(
+    loadCurrentRuntimeDataPack(rootDir),
+    treasure,
+    spell
+  );
   const state = initializeGame({ dataPack, seed: 60615 });
   const player = state.players[0];
   assert.ok(player);
@@ -143,7 +207,11 @@ test("wizard property discount and scoring modifier apply to owned treasures", (
 
   assert.equal(calculateEffectiveCardCost(state, player.playerId, treasure), 4);
   assert.equal(calculateEffectiveCardCost(state, player.playerId, spell), 5);
-  assert.equal(scoreGame(state).find((score) => score.playerId === player.playerId)?.victoryPoints, 3);
+  assert.equal(
+    scoreGame(state).find((score) => score.playerId === player.playerId)
+      ?.victoryPoints,
+    3
+  );
 });
 
 test("non-executable wizard property effects fail instead of applying silently", () => {
@@ -153,21 +221,27 @@ test("non-executable wizard property effects fail instead of applying silently",
   const wizardProperty = player.wizardProperties[0];
   assert.ok(wizardProperty);
   const tokenDefinitions = new Map(state.tokenDefinitions);
-  tokenDefinitions.set(wizardProperty.definitionId, createNonExecutableMaxLifeWizardProperty(wizardProperty.definitionId, 3));
+  tokenDefinitions.set(
+    wizardProperty.definitionId,
+    createNonExecutableMaxLifeWizardProperty(wizardProperty.definitionId, 3)
+  );
   const stateWithDraftEffect = {
     ...state,
     tokenDefinitions,
   };
 
   assert.throws(
-    () => calculateEffectivePlayerMaxLife(stateWithDraftEffect, player.playerId),
-    /Cannot execute non-playable wizard property/,
+    () =>
+      calculateEffectivePlayerMaxLife(stateWithDraftEffect, player.playerId),
+    /Cannot execute non-playable wizard property/
   );
 });
 
 test("Dingler scoring penalty is an effective player victory point modifier", () => {
   const state = initializeGame({ rootDir, seed: 60615 });
-  const player = state.players.find((candidate) => candidate.playerId === state.activePlayerId);
+  const player = state.players.find(
+    (candidate) => candidate.playerId === state.activePlayerId
+  );
   assert.ok(player);
   const firstCard = player.hand[0];
   assert.ok(firstCard);
@@ -175,28 +249,57 @@ test("Dingler scoring penalty is an effective player victory point modifier", ()
   assert.ok(firstCardDefinition);
   const baseCardVictoryPoints = firstCardDefinition.engine.victoryPoints;
   const firstTokenDefinition = state.tokenDefinitions.values().next().value;
-  const tokenVictoryPointsBefore = firstTokenDefinition?.kind === "deadWizardToken" ? firstTokenDefinition.victoryPoints : undefined;
-  const scoreBefore = scoreGame(state).find((score) => score.playerId === player.playerId);
+  const tokenVictoryPointsBefore =
+    firstTokenDefinition?.kind === "deadWizardToken"
+      ? firstTokenDefinition.victoryPoints
+      : undefined;
+  const scoreBefore = scoreGame(state).find(
+    (score) => score.playerId === player.playerId
+  );
   assert.ok(scoreBefore);
 
   const gainCardId = addFixtureStatusCardToActiveHand(state, "gain_status");
-  assert.equal(applyAction(state, { type: "playCard", cardInstanceId: gainCardId }).ok, true);
+  assert.equal(
+    applyAction(state, { type: "playCard", cardInstanceId: gainCardId }).ok,
+    true
+  );
 
-  assert.equal(calculateEffectivePlayerVictoryPoints(state, player.playerId, 0), -5);
-  assert.equal(scoreGame(state).find((score) => score.playerId === player.playerId)?.victoryPoints, scoreBefore.victoryPoints - 5);
+  assert.equal(
+    calculateEffectivePlayerVictoryPoints(state, player.playerId, 0),
+    -5
+  );
+  assert.equal(
+    scoreGame(state).find((score) => score.playerId === player.playerId)
+      ?.victoryPoints,
+    scoreBefore.victoryPoints - 5
+  );
   assert.equal(firstCardDefinition.engine.victoryPoints, baseCardVictoryPoints);
   if (firstTokenDefinition?.kind === "deadWizardToken") {
     assert.equal(firstTokenDefinition.victoryPoints, tokenVictoryPointsBefore);
   }
 
   const removeCardId = addFixtureStatusCardToActiveHand(state, "remove_status");
-  assert.equal(applyAction(state, { type: "playCard", cardInstanceId: removeCardId }).ok, true);
+  assert.equal(
+    applyAction(state, { type: "playCard", cardInstanceId: removeCardId }).ok,
+    true
+  );
 
-  assert.equal(calculateEffectivePlayerVictoryPoints(state, player.playerId, 0), 0);
-  assert.equal(scoreGame(state).find((score) => score.playerId === player.playerId)?.victoryPoints, scoreBefore.victoryPoints);
+  assert.equal(
+    calculateEffectivePlayerVictoryPoints(state, player.playerId, 0),
+    0
+  );
+  assert.equal(
+    scoreGame(state).find((score) => score.playerId === player.playerId)
+      ?.victoryPoints,
+    scoreBefore.victoryPoints
+  );
 });
 
-function createCostModifierStatus(playerId: StatusInstance["ownerId"], definitionId: string, amount: number): StatusInstance {
+function createCostModifierStatus(
+  playerId: StatusInstance["ownerId"],
+  definitionId: string,
+  amount: number
+): StatusInstance {
   return {
     instanceId: "fixture-cost-status",
     statusId: "fixture-cost-status",
@@ -208,7 +311,7 @@ function createCostModifierStatus(playerId: StatusInstance["ownerId"], definitio
 function createCostModifierTrophy(
   playerId: TrophyLikeInstance["ownerId"],
   definitionId: string,
-  amount: number,
+  amount: number
 ): TrophyLikeInstance {
   return {
     instanceId: "fixture-cost-trophy",
@@ -221,7 +324,7 @@ function createCostModifierTrophy(
 function createTokenVictoryPointModifierTrophy(
   playerId: TrophyLikeInstance["ownerId"],
   definitionId: string,
-  amount: number,
+  amount: number
 ): TrophyLikeInstance {
   return {
     instanceId: "fixture-token-vp-trophy",
@@ -246,13 +349,16 @@ function createTokenVictoryPointModifierTrophy(
 function createTreasureModifierDataPack(
   dataPack: LoadedDataPack,
   treasure: CardDefinition,
-  spell: CardDefinition,
+  spell: CardDefinition
 ): LoadedDataPack {
   const tokenDefinitions = new Map(dataPack.tokenDefinitions);
   for (const entry of dataPack.tokenStacks.wizardProperties?.entries ?? []) {
     const definition = tokenDefinitions.get(entry.tokenId);
     if (definition?.kind === "wizardProperty") {
-      tokenDefinitions.set(entry.tokenId, createTreasureDiscountWizardProperty(entry.tokenId));
+      tokenDefinitions.set(
+        entry.tokenId,
+        createTreasureDiscountWizardProperty(entry.tokenId)
+      );
     }
   }
 
@@ -267,7 +373,9 @@ function createTreasureModifierDataPack(
   };
 }
 
-function createTreasureDiscountWizardProperty(tokenId: string): TokenDefinition {
+function createTreasureDiscountWizardProperty(
+  tokenId: string
+): TokenDefinition {
   return {
     schemaVersion: 1,
     tokenId,
@@ -309,7 +417,7 @@ function createTypedFixtureCardDefinition(
   cardId: string,
   cardTypes: string[],
   cost: number,
-  victoryPoints: number,
+  victoryPoints: number
 ): CardDefinition {
   return {
     schemaVersion: 1,
@@ -339,7 +447,10 @@ function createTypedFixtureCardDefinition(
   };
 }
 
-function createNonExecutableMaxLifeWizardProperty(tokenId: string, amount: number): TokenDefinition {
+function createNonExecutableMaxLifeWizardProperty(
+  tokenId: string,
+  amount: number
+): TokenDefinition {
   return {
     schemaVersion: 1,
     tokenId,
@@ -365,7 +476,10 @@ function createNonExecutableMaxLifeWizardProperty(tokenId: string, amount: numbe
   };
 }
 
-function createCostModifierEffect(definitionId: string, amount: number): unknown {
+function createCostModifierEffect(
+  definitionId: string,
+  amount: number
+): unknown {
   return {
     effectId: "fixture_modify_effective_value",
     timing: "whileControlled",
@@ -379,8 +493,13 @@ function createCostModifierEffect(definitionId: string, amount: number): unknown
   };
 }
 
-function addFixtureStatusCardToActiveHand(state: ReturnType<typeof initializeGame>, effectId: "gain_status" | "remove_status"): string {
-  const player = state.players.find((candidate) => candidate.playerId === state.activePlayerId);
+function addFixtureStatusCardToActiveHand(
+  state: ReturnType<typeof initializeGame>,
+  effectId: "gain_status" | "remove_status"
+): string {
+  const player = state.players.find(
+    (candidate) => candidate.playerId === state.activePlayerId
+  );
   assert.ok(player);
   const cardId = `fixture-${effectId}-dingler-card-${player.hand.length + 1}`;
   const definition: CardDefinition = {
