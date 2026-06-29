@@ -20,9 +20,15 @@ import {
 import { addFixtureDefinitionToActiveHand } from "./helpers/fixture-cards.js";
 
 const rootDir = process.cwd();
+const playableRuntimeDataPackPath =
+  "tests/fixtures/playable-runtime-data-pack.json";
 
 test("a controlled fixture object can modify a card's effective cost without mutating base data", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const player = state.players.find(
     (candidate) => candidate.playerId === state.activePlayerId
   );
@@ -56,7 +62,11 @@ test("a controlled fixture object can modify a card's effective cost without mut
 });
 
 test("omitting the controlled object removes the effective cost modifier", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const player = state.players.find(
     (candidate) => candidate.playerId === state.activePlayerId
   );
@@ -88,7 +98,11 @@ test("omitting the controlled object removes the effective cost modifier", () =>
 });
 
 test("controlled object view gathers separately stored cards, tokens, wizard properties, statuses, and trophy-like objects", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const player = state.players[0];
   assert.ok(player);
   const permanent = state.common.market.shift();
@@ -140,7 +154,11 @@ test("controlled object view gathers separately stored cards, tokens, wizard pro
 });
 
 test("a controlled fixture object can modify token scoring without mutating token definitions", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const player = state.players[0];
   assert.ok(player);
   assert.equal(state.common.deadWizardTokens.status, "available");
@@ -191,7 +209,7 @@ test("wizard property discount and scoring modifier apply to owned treasures", (
     2
   );
   const dataPack = createTreasureModifierDataPack(
-    loadCurrentRuntimeDataPack(rootDir),
+    loadCurrentRuntimeDataPack(rootDir, playableRuntimeDataPackPath),
     treasure,
     spell
   );
@@ -215,7 +233,11 @@ test("wizard property discount and scoring modifier apply to owned treasures", (
 });
 
 test("non-executable wizard property effects fail instead of applying silently", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const player = state.players[0];
   assert.ok(player);
   const wizardProperty = player.wizardProperties[0];
@@ -238,7 +260,11 @@ test("non-executable wizard property effects fail instead of applying silently",
 });
 
 test("Dingler scoring penalty is an effective player victory point modifier", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const player = state.players.find(
     (candidate) => candidate.playerId === state.activePlayerId
   );

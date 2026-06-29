@@ -3,20 +3,9 @@
   "deckId": "starter-deck",
   "runtimeSchema": "krutagidon.deckComposition.v0",
   "role": "starterDeckTemplate",
-  "mappingStatus": "supported",
-  "entries": [
-    {
-      "cardId": "esw2_dbg__starter_001",
-      "count": 6
-    },
-    {
-      "cardId": "esw2_dbg__starter_003",
-      "count": 1
-    },
-    {
-      "cardId": "esw2_dbg__starter_002",
-      "count": 3
-    }
-  ],
-  "notes": ["Per-player starter deck: 6 Знак, 1 Сырная палочка, 3 Пшик."]
+  "mappingStatus": "incomplete-full-only",
+  "entries": [],
+  "notes": [
+    "Current runtime starter baseline is intentionally empty until new full-runtime card generation lands."
+  ]
 }

@@ -11,6 +11,12 @@ import {
 } from "../src/index.js";
 
 const rootDir = process.cwd();
+const playableRuntimeDataPackPath =
+  "tests/fixtures/playable-runtime-data-pack.json";
+
+function loadPlayableRuntimeDataPack(): LoadedDataPack {
+  return loadCurrentRuntimeDataPack(rootDir, playableRuntimeDataPackPath);
+}
 
 test("initial game setup is deterministic for the same seed", () => {
   const first = initializeGame({ rootDir, seed: 60615 });
@@ -55,12 +61,27 @@ test("current runtime data pack uses current-runtime manifest and composition pa
   );
 });
 
-test("initial game setup creates expected player and common zones", () => {
+test("current runtime data pack keeps only special runtime cards and empty normal compositions", () => {
+  const dataPack = loadCurrentRuntimeDataPack(rootDir);
+
+  assert.deepEqual([...dataPack.cardDefinitions.keys()].sort(), [
+    "esw2_dbg__limp_wand",
+    "esw2_dbg__wild_magic",
+  ]);
+  assert.deepEqual(dataPack.decks.starterDeck.entries, []);
+  assert.deepEqual(dataPack.decks.mainDeck.entries, []);
+  assert.deepEqual(dataPack.decks.legendDeck.entries, []);
+  assert.deepEqual(dataPack.decks.familiarPool?.entries, []);
+});
+
+test("initial game setup keeps current runtime runnable with empty normal compositions", () => {
   const state = initializeGame({ rootDir, seed: 12345 });
 
   assert.equal(state.players.length, 2);
-  assert.equal(state.common.market.length, 5);
-  assert.equal(state.common.legendMarket.length, 3);
+  assert.equal(state.common.market.length, 0);
+  assert.equal(state.common.legendMarket.length, 0);
+  assert.equal(state.common.mainDeck.length, 0);
+  assert.equal(state.common.legendDeck.length, 0);
   assert.equal(state.common.wildMagicStack.length, 15);
   assert.equal(state.common.limpWandStack.length, 15);
   assert.equal(state.common.deadWizardTokens.status, "available");
@@ -72,12 +93,13 @@ test("initial game setup creates expected player and common zones", () => {
   assert.equal(neutralDeadWizardToken.victoryPoints, -3);
 
   for (const player of state.players) {
-    assert.equal(player.hand.length, 5);
-    assert.equal(player.deck.length, 5);
+    assert.equal(player.hand.length, 0);
+    assert.equal(player.deck.length, 0);
     assert.equal(player.discard.length, 0);
     assert.equal(player.playedThisTurn.length, 0);
     assert.equal(player.permanents.length, 0);
     assert.equal(player.wizardProperties.length, 1);
+    assert.equal(player.unboughtFamiliar, undefined);
     const wizardProperty = player.wizardProperties[0];
     assert.ok(wizardProperty);
     assert.equal(wizardProperty.ownerId, player.playerId);
@@ -176,7 +198,11 @@ test("familiar-selection wizard property remains non-executable until familiar l
 });
 
 test("starter deck definitions are independent physical instances per player", () => {
-  const state = initializeGame({ rootDir, seed: 777 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 777,
+  });
   const firstPlayerStarter = ownedCards(state, "player-1");
   const secondPlayerStarter = ownedCards(state, "player-2");
 
@@ -210,7 +236,7 @@ test("starter deck definitions are independent physical instances per player", (
 
 test("wizard property setup replaces exactly one owned starter Sign with Hrenalocka Wand", () => {
   const dataPack = createWizardPropertySetupDataPack(
-    loadCurrentRuntimeDataPack(rootDir),
+    loadPlayableRuntimeDataPack(),
     "esw2_dbg__wizard_property_009"
   );
   const state = initializeGame({ dataPack, seed: 777 });

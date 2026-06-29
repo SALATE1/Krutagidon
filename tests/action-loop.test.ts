@@ -19,9 +19,15 @@ import { addFixtureDefinitionToActiveHand } from "./helpers/fixture-cards.js";
 import { replacePostSetupWizardPropertyFixture } from "./helpers/fixture-tokens.js";
 
 const rootDir = process.cwd();
+const playableRuntimeDataPackPath =
+  "tests/fixtures/playable-runtime-data-pack.json";
 
 test("active player can play a card from hand through the action loop", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -67,7 +73,11 @@ test("active player can play a card from hand through the action loop", () => {
 });
 
 test("playing an add-power card records an immediate effect consequence", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -99,7 +109,11 @@ test("playing an add-power card records an immediate effect consequence", () => 
 });
 
 test("illegal actions are rejected without changing game state", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const before = snapshotActionState(state);
 
   const result = applyAction(state, {
@@ -112,7 +126,11 @@ test("illegal actions are rejected without changing game state", () => {
 });
 
 test("active player can buy an affordable market card into discard", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -150,7 +168,11 @@ test("active player can buy an affordable market card into discard", () => {
 });
 
 test("market chip marker adds chips to every marked card in that market during Market Flow", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const markedInMarket: CardInstance = {
     instanceId: "fixture-marked-in-market",
     definitionId: "esw2_dbg__main_012",
@@ -212,7 +234,11 @@ test("market chip marker adds chips to every marked card in that market during M
 });
 
 test("turn-start Market Flow adds a normal main-deck card to the main market", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const marketFlowCard = state.common.market.find((card) => {
     return (
       state.cardDefinitions.get(card.definitionId)?.engine.cardKind === "normal"
@@ -239,7 +265,11 @@ test("turn-start Market Flow adds a normal main-deck card to the main market", (
 });
 
 test("megaMayhem revealed during Market Flow executes its mapped onMayhemResolve effect", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   for (const player of state.players) {
     player.life.current = 20;
   }
@@ -284,7 +314,12 @@ test("megaMayhem revealed during Market Flow executes its mapped onMayhemResolve
 });
 
 test("megaMayhem Dingler toggle resolves for each player in active-player order", () => {
-  const state = initializeGame({ rootDir, seed: 60615, playerCount: 3 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+    playerCount: 3,
+  });
   state.activePlayerId = "player-2";
   const orderedPlayers = getPlayersInActiveOrder(state);
   const [activePlayer, secondPlayer, thirdPlayer] = orderedPlayers;
@@ -366,7 +401,12 @@ test("megaMayhem Dingler toggle resolves for each player in active-player order"
 });
 
 test("megaMayhem destroys top main deck cards in active-player order and kills players when Mayhem is destroyed", () => {
-  const state = initializeGame({ rootDir, seed: 60615, playerCount: 3 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+    playerCount: 3,
+  });
   state.activePlayerId = "player-2";
   const orderedPlayers = getPlayersInActiveOrder(state);
   const [activePlayer, secondPlayer, thirdPlayer] = orderedPlayers;
@@ -493,7 +533,12 @@ test("megaMayhem destroys top main deck cards in active-player order and kills p
 });
 
 test("Mayhem discards top deck cards and destroys them in active-player order", () => {
-  const state = initializeGame({ rootDir, seed: 60615, playerCount: 3 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+    playerCount: 3,
+  });
   state.activePlayerId = "player-2";
   const orderedPlayers = getPlayersInActiveOrder(state);
   const [activePlayer, secondPlayer, thirdPlayer] = orderedPlayers;
@@ -589,7 +634,12 @@ test("Mayhem discards top deck cards and destroys them in active-player order", 
 });
 
 test("Mayhem discards each deck and destroys the first discard in active-player order", () => {
-  const state = initializeGame({ rootDir, seed: 60615, playerCount: 3 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+    playerCount: 3,
+  });
   state.activePlayerId = "player-2";
   const orderedPlayers = getPlayersInActiveOrder(state);
   const [activePlayer, secondPlayer, thirdPlayer] = orderedPlayers;
@@ -704,7 +754,12 @@ test("Mayhem discards each deck and destroys the first discard in active-player 
 });
 
 test("Mayhem hand-redraw choice discards hands and draws in active-player order", () => {
-  const state = initializeGame({ rootDir, seed: 60615, playerCount: 3 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+    playerCount: 3,
+  });
   state.activePlayerId = "player-2";
   const orderedPlayers = getPlayersInActiveOrder(state);
   const [activePlayer, secondPlayer, thirdPlayer] = orderedPlayers;
@@ -823,7 +878,11 @@ test("Mayhem hand-redraw choice discards hands and draws in active-player order"
 });
 
 test("mayhem revealed during Market Flow resolves and Market Flow continues with the next normal card", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const mayhemDefinition = createFixtureCardDefinition(
     "fixture-market-flow-mayhem-add-power",
     [{ effectId: "add_power", timing: "onMayhemResolve", amount: 2 }],
@@ -932,7 +991,11 @@ test("Market Flow interface keeps setup Mayhem passive and turn Mayhem active", 
 });
 
 test("Market Flow reports main deck exhaustion without starting the next turn", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   state.common.market.splice(0, 1);
   state.common.mainDeck.splice(0);
 
@@ -950,7 +1013,11 @@ test("Market Flow reports main deck exhaustion without starting the next turn", 
 });
 
 test("Market Flow reports legend deck exhaustion without starting the next turn", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   state.common.legendMarket.splice(0, 1);
   state.common.legendDeck.splice(0);
 
@@ -968,7 +1035,11 @@ test("Market Flow reports legend deck exhaustion without starting the next turn"
 });
 
 test("unsupported Mayhem effect fails during Market Flow instead of becoming a silent no-op", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const unsupportedMayhemDefinition: CardDefinition = {
     schemaVersion: 1,
     cardId: "fixture-unsupported-mayhem",
@@ -1030,7 +1101,11 @@ test("unsupported Mayhem effect fails during Market Flow instead of becoming a s
 });
 
 test("active player can buy wild magic from its stack into discard", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -1060,7 +1135,11 @@ test("active player can buy wild magic from its stack into discard", () => {
 });
 
 test("active player can buy and play their setup familiar", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -1123,7 +1202,11 @@ test("active player can buy and play their setup familiar", () => {
 });
 
 test("bought familiar can discard another hand card to avoid an attack", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -1201,7 +1284,11 @@ test("bought familiar can discard another hand card to avoid an attack", () => {
 });
 
 test("bought familiar cannot defend when no other hand card can pay its discard cost", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -1250,7 +1337,11 @@ test("bought familiar cannot defend when no other hand card can pay its discard 
 });
 
 test("playing wild magic uses the first legal choice and gains 2 power", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -1281,7 +1372,11 @@ test("playing wild magic uses the first legal choice and gains 2 power", () => {
 });
 
 test("wild magic can choose to play the top card of a foe deck when that option is first legal", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -1372,7 +1467,11 @@ test("wild magic can choose to play the top card of a foe deck when that option 
 });
 
 test("wild magic foe-deck play triggers wizard property on-play effects for non-ongoing cards", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -1450,7 +1549,11 @@ test("wild magic foe-deck play triggers wizard property on-play effects for non-
 });
 
 test("wild magic foe-deck play takes ownership of ongoing cards and keeps them controlled", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -1529,7 +1632,11 @@ test("wild magic foe-deck play takes ownership of ongoing cards and keeps them c
 });
 
 test("ending a turn cleans up non-permanents, draws a new hand, and advances active player", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const startingActivePlayerId = state.activePlayerId;
   const activePlayer = state.players.find(
     (player) => player.playerId === startingActivePlayerId
@@ -1575,7 +1682,11 @@ test("ending a turn cleans up non-permanents, draws a new hand, and advances act
 });
 
 test("Basic Trophy grants a chip at the end of its controller's turn", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -1600,7 +1711,11 @@ test("Basic Trophy grants a chip at the end of its controller's turn", () => {
 });
 
 test("played permanents stay in the controlled permanent zone after cleanup", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -1629,7 +1744,11 @@ test("played permanents stay in the controlled permanent zone after cleanup", ()
 });
 
 test("active player can activate a controlled permanent once per turn", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -1685,7 +1804,11 @@ test("active player can activate a controlled permanent once per turn", () => {
 });
 
 test("active player can activate a wizard property only when its control-count condition is met", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -1753,7 +1876,11 @@ test("active player can activate a wizard property only when its control-count c
 });
 
 test("wizard property on-play trigger grants chips only for matching ongoing cards", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -1789,7 +1916,11 @@ test("wizard property on-play trigger grants chips only for matching ongoing car
 });
 
 test("wizard property optional topdeck for gained cards runs before normal discard", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -1837,7 +1968,11 @@ test("wizard property optional topdeck for gained cards runs before normal disca
 });
 
 test("temporary hand limit modifier counts cards gained this turn and resets after drawing", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -1913,7 +2048,11 @@ test("temporary hand limit modifier counts cards gained this turn and resets aft
 });
 
 test("playing a v0 draw card draws from the active player's deck", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -1978,7 +2117,11 @@ test("targeted fixture effect chooses the first legal market target deterministi
 });
 
 test("gain_card moves the first legal market card into the active player's discard", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -2017,8 +2160,16 @@ test("gain_card moves the first legal market card into the active player's disca
 });
 
 test("buying and gain_card share gained-card movement guarantees", () => {
-  const buyState = initializeGame({ rootDir, seed: 60615 });
-  const gainState = initializeGame({ rootDir, seed: 60615 });
+  const buyState = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
+  const gainState = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const bought = prepareGainedMovementFixture(
     buyState,
     "fixture-shared-buy-card"
@@ -2063,7 +2214,11 @@ test("buying and gain_card share gained-card movement guarantees", () => {
 });
 
 test("discard_card moves the first legal hand card into the active player's discard", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -2115,7 +2270,11 @@ test("discard_card moves the first legal hand card into the active player's disc
 });
 
 test("destroy_card moves a normal card to the destroyed zone and preserves ownership", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -2170,7 +2329,11 @@ test("destroy_card moves a normal card to the destroyed zone and preserves owner
 });
 
 test("destroy_card routes wild magic and limp wand cards back to their stacks", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -2228,7 +2391,11 @@ test("destroy_card routes wild magic and limp wand cards back to their stacks", 
 });
 
 test("destroy_card keeps mayhem and megaMayhem cards in ordered event piles", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -2307,7 +2474,11 @@ test("destroy_card keeps mayhem and megaMayhem cards in ordered event piles", ()
 });
 
 test("card movement effects skip by default when no legal card choice exists", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   state.common.market.splice(0);
   const fixtureCardId = addFixtureCardToActiveHand(state, {
     effectId: "gain_card",
@@ -2335,7 +2506,11 @@ test("card movement effects skip by default when no legal card choice exists", (
 });
 
 test("reveal_top_card reveals the active player's top deck card without moving it", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -2371,7 +2546,11 @@ test("reveal_top_card reveals the active player's top deck card without moving i
 });
 
 test("reveal_top_card shuffles discard into an empty deck before revealing", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -2408,7 +2587,11 @@ test("reveal_top_card shuffles discard into an empty deck before revealing", () 
 });
 
 test("play_top_card plays the active player's top deck card through on-play effects", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -2459,7 +2642,11 @@ test("play_top_card plays the active player's top deck card through on-play effe
 });
 
 test("play_top_card triggers wizard property on-play effects and cleans up to owner discard", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -2511,7 +2698,11 @@ test("play_top_card triggers wizard property on-play effects and cleans up to ow
 });
 
 test("deal_damage can kill an opponent, give a neutral DWT, resurrect, and affect scoring", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -2609,7 +2800,11 @@ test("deal_damage can kill an opponent, give a neutral DWT, resurrect, and affec
 });
 
 test("wizard property resurrection life override respects loser-status exception", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -2669,7 +2864,11 @@ test("wizard property resurrection life override respects loser-status exception
 });
 
 test("heal uses effective max life and logs clamping without mutating base max life", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -2719,7 +2918,11 @@ test("heal uses effective max life and logs clamping without mutating base max l
 });
 
 test("heal below effective max life does not clamp", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -2762,7 +2965,11 @@ test("heal below effective max life does not clamp", () => {
 });
 
 test("set_life sets the target player's current life without using healing clamp", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -2811,7 +3018,11 @@ test("set_life sets the target player's current life without using healing clamp
 });
 
 test("set_life uses Dingler max life as a cap", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -2858,7 +3069,11 @@ test("set_life uses Dingler max life as a cap", () => {
 });
 
 test("attack_damage damages the first opponent when no defense is available", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -2905,7 +3120,11 @@ test("attack_damage damages the first opponent when no defense is available", ()
 });
 
 test("wizard property owned wand attacks gain damage and cannot be avoided", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const propertyOwner = mustGetPlayer(state, "player-2");
   const targetPlayer = mustGetPlayer(state, "player-1");
   state.activePlayerId = propertyOwner.playerId;
@@ -2942,7 +3161,12 @@ test("wizard property owned wand attacks gain damage and cannot be avoided", () 
 });
 
 test("wizard property does not affect borrowed wands or non-wand attacks", () => {
-  const state = initializeGame({ rootDir, seed: 60615, playerCount: 9 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+    playerCount: 9,
+  });
   const propertyOwner = state.players.find((player) => {
     return player.wizardProperties.some(
       (property) => property.definitionId === "esw2_dbg__wizard_property_009"
@@ -3036,7 +3260,11 @@ test("wizard property does not affect borrowed wands or non-wand attacks", () =>
 });
 
 test("Cheese Wand gains power, attacks a chosen player, and gains chips on kill", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = mustGetPlayer(state, "player-2");
   const targetPlayer = mustGetPlayer(state, "player-1");
   state.activePlayerId = activePlayer.playerId;
@@ -3069,7 +3297,11 @@ test("Cheese Wand gains power, attacks a chosen player, and gains chips on kill"
 });
 
 test("Hrenalocka Wand returns up to two discard cards to hand when its attack kills", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = mustGetPlayer(state, "player-2");
   const targetPlayer = mustGetPlayer(state, "player-1");
   state.activePlayerId = activePlayer.playerId;
@@ -3116,7 +3348,11 @@ test("Hrenalocka Wand returns up to two discard cards to hand when its attack ki
 });
 
 test("Slapalocka Wand steals or gains chips equal to actual attack damage dealt", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = mustGetPlayer(state, "player-1");
   const targetPlayer = mustGetPlayer(state, "player-2");
   state.activePlayerId = activePlayer.playerId;
@@ -3139,7 +3375,11 @@ test("Slapalocka Wand steals or gains chips equal to actual attack damage dealt"
 });
 
 test("Losharocka Wand can self-target and makes the killed target a Dingler", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = mustGetPlayer(state, "player-1");
   state.activePlayerId = activePlayer.playerId;
   activePlayer.wizardProperties = [];
@@ -3160,7 +3400,11 @@ test("Losharocka Wand can self-target and makes the killed target a Dingler", ()
 });
 
 test("Chipsalocka Wand spends one chip before its optional chosen-player attack", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = mustGetPlayer(state, "player-2");
   const targetPlayer = mustGetPlayer(state, "player-1");
   state.activePlayerId = activePlayer.playerId;
@@ -3193,7 +3437,11 @@ test("Chipsalocka Wand spends one chip before its optional chosen-player attack"
 });
 
 test("Chipsalocka Wand can skip its optional attack when the chip cost is unavailable", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = mustGetPlayer(state, "player-2");
   const targetPlayer = mustGetPlayer(state, "player-1");
   state.activePlayerId = activePlayer.playerId;
@@ -3224,7 +3472,12 @@ test("Chipsalocka Wand can skip its optional attack when the chip cost is unavai
 });
 
 test("Potny's Buzzing Wand chooses left or right and chains in the chosen direction", () => {
-  const state = initializeGame({ rootDir, seed: 60615, playerCount: 4 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+    playerCount: 4,
+  });
   const activePlayer = mustGetPlayer(state, "player-1");
   const leftFoe = mustGetPlayer(state, "player-2");
   const nextLeftFoe = mustGetPlayer(state, "player-3");
@@ -3275,7 +3528,11 @@ test("Potny's Buzzing Wand chooses left or right and chains in the chosen direct
 });
 
 test("attack_damage kill awards Basic Trophy to the attacker", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -3324,7 +3581,11 @@ test("attack_damage kill awards Basic Trophy to the attacker", () => {
 });
 
 test("attack_damage kill transfers Basic Trophy from its previous controller", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -3365,7 +3626,11 @@ test("attack_damage kill transfers Basic Trophy from its previous controller", (
 });
 
 test("deal_damage self-kill does not move Basic Trophy", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -3412,7 +3677,11 @@ test("deal_damage self-kill does not move Basic Trophy", () => {
 });
 
 test("player-caused deal_damage kill awards Basic Trophy to the source player", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -3464,7 +3733,11 @@ test("player-caused deal_damage kill awards Basic Trophy to the source player", 
 });
 
 test("attack_damage can be avoided by the first discard-self defense card in hand", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -3536,7 +3809,11 @@ test("attack_damage can be avoided by the first discard-self defense card in han
 });
 
 test("attack_damage can be avoided by a topdeck-self defense card in hand", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -3601,7 +3878,11 @@ test("attack_damage can be avoided by a topdeck-self defense card in hand", () =
 });
 
 test("avoid_attack defense with an unpayable discard-other-card cost is not legal", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -3637,7 +3918,11 @@ test("avoid_attack defense with an unpayable discard-other-card cost is not lega
 });
 
 test("avoid_attack defense pays discard, chip, and nonlethal life costs before avoiding an attack", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -3719,7 +4004,11 @@ test("avoid_attack defense pays discard, chip, and nonlethal life costs before a
 });
 
 test("avoid_attack defense with a lethal life cost is skipped for the next legal defense option", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -3772,7 +4061,11 @@ test("avoid_attack defense with a lethal life cost is skipped for the next legal
 });
 
 test("avoid_attack defense runs supported branch effects through the shared effect runtime after costs are paid", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -3835,7 +4128,11 @@ test("avoid_attack defense runs supported branch effects through the shared effe
 });
 
 test("defense branch damage kill awards Basic Trophy to the defending player", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -3907,7 +4204,12 @@ test("defense branch damage kill awards Basic Trophy to the defending player", (
 });
 
 test("multi_target_attack resolves each opponent in seating order before moving to the next target", () => {
-  const state = initializeGame({ rootDir, seed: 60615, playerCount: 3 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+    playerCount: 3,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -3966,7 +4268,12 @@ test("multi_target_attack resolves each opponent in seating order before moving 
 });
 
 test("multi_target_attack opens a separate defense window for each target", () => {
-  const state = initializeGame({ rootDir, seed: 60615, playerCount: 3 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+    playerCount: 3,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -4023,7 +4330,12 @@ test("multi_target_attack opens a separate defense window for each target", () =
 });
 
 test("mayhem_attack collects decisions for all players before resolving damage in active-player order", () => {
-  const state = initializeGame({ rootDir, seed: 60615, playerCount: 3 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+    playerCount: 3,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -4094,7 +4406,12 @@ test("mayhem_attack collects decisions for all players before resolving damage i
 });
 
 test("mayhem_attack kill does not move Basic Trophy", () => {
-  const state = initializeGame({ rootDir, seed: 60615, playerCount: 3 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+    playerCount: 3,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -4138,7 +4455,12 @@ test("mayhem_attack kill does not move Basic Trophy", () => {
 });
 
 test("unowned Mega Mayhem death does not move Basic Trophy", () => {
-  const state = initializeGame({ rootDir, seed: 60615, playerCount: 3 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+    playerCount: 3,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -4188,7 +4510,11 @@ test("unowned Mega Mayhem death does not move Basic Trophy", () => {
 });
 
 test("gain_status can make the active player Dingler and clamps life to 15", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -4226,7 +4552,11 @@ test("gain_status can make the active player Dingler and clamps life to 15", () 
 });
 
 test("remove_status makes a Dingler player normal without healing current life", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -4285,7 +4615,11 @@ test("remove_status makes a Dingler player normal without healing current life",
 });
 
 test("toggle_status alternates Dingler and normal status", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -4330,7 +4664,11 @@ test("toggle_status alternates Dingler and normal status", () => {
 });
 
 test("active Dingler status gives a 5 VP scoring penalty until removed", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -4379,7 +4717,11 @@ test("active Dingler status gives a 5 VP scoring penalty until removed", () => {
 });
 
 test("Loshashlyk gains one chip per Dingler player", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -4428,7 +4770,11 @@ test("Loshashlyk gains one chip per Dingler player", () => {
 });
 
 test("targeted fixture effect skips when there are no legal choices by default", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   state.common.market.splice(0);
   const fixtureCardId = addFixtureCardToActiveHand(state, {
     effectId: "fixture_add_power_equal_to_target_cost",
@@ -4451,7 +4797,11 @@ test("targeted fixture effect skips when there are no legal choices by default",
 });
 
 test("targeted fixture effect can fail when legal choices are empty", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   state.common.market.splice(0);
   const fixtureCardId = addFixtureCardToActiveHand(state, {
     effectId: "fixture_add_power_equal_to_target_cost",
@@ -4472,7 +4822,11 @@ test("targeted fixture effect can fail when legal choices are empty", () => {
 });
 
 test("targeted fixture effect surfaces unsupported selectors explicitly", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const fixtureCardId = addFixtureCardToActiveHand(state, {
     effectId: "fixture_add_power_equal_to_target_cost",
     timing: "onPlay",
@@ -4494,7 +4848,11 @@ test("targeted fixture effect surfaces unsupported selectors explicitly", () => 
 });
 
 test("runtime execution rejects unsupported effect ids explicitly", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const fixtureCardId = addFixtureCardToActiveHand(state, {
     effectId: "fixture_runtime_effect_not_in_catalog",
     timing: "onPlay",
@@ -4513,7 +4871,11 @@ test("runtime execution rejects unsupported effect ids explicitly", () => {
 });
 
 test("runtime execution rejects fixture-only effects in combat mode", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const activePlayer = state.players.find(
     (player) => player.playerId === state.activePlayerId
   );
@@ -4677,7 +5039,11 @@ function playTargetedFixtureEffect(
   firstMarketCardCost: number;
   selectedTargetId: string | undefined;
 } {
-  const state = initializeGame({ rootDir, seed });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed,
+  });
   const firstMarketCard = state.common.market[0];
   assert.ok(firstMarketCard);
   const firstMarketCardCost = state.cardDefinitions.get(
@@ -4766,7 +5132,11 @@ function addFixtureCardToActiveHand(
 }
 
 function createMarketFlowModeFixture(): GameState {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const mayhemDefinition = createFixtureCardDefinition(
     "fixture-market-flow-interface-mayhem",
     [{ effectId: "add_power", timing: "onMayhemResolve", amount: 2 }],

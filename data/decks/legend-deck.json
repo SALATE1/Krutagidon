@@ -4,33 +4,8 @@
   "runtimeSchema": "krutagidon.deckComposition.v0",
   "role": "legendDeck",
   "mappingStatus": "incomplete-full-only",
-  "entries": [
-    {
-      "cardId": "esw2_dbg__legend_001",
-      "count": 2
-    },
-    {
-      "cardId": "esw2_dbg__legend_002",
-      "count": 2
-    },
-    {
-      "cardId": "esw2_dbg__legend_003",
-      "count": 2
-    },
-    {
-      "cardId": "esw2_dbg__legend_006",
-      "count": 2
-    },
-    {
-      "cardId": "esw2_dbg__legend_009",
-      "count": 2
-    },
-    {
-      "cardId": "esw2_dbg__legend_015",
-      "count": 1
-    }
-  ],
+  "entries": [],
   "notes": [
-    "Current runtime deck. Excludes cards without full supported runtime coverage."
+    "Current runtime deck baseline is intentionally empty until new full-runtime card generation lands."
   ]
 }

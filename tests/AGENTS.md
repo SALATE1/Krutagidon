@@ -16,6 +16,7 @@ This folder contains TypeScript tests, deterministic fixtures, and test helpers.
 - Do not mutate shared fixture definitions in ways that leak between tests.
 - When behavior changes, test the externally relevant result, not only implementation internals.
 - Use stable IDs in test data and assertions.
+- When `current-runtime` is intentionally incomplete, keep broad behavior suites on explicit test-only runtime packs under `tests/fixtures/` instead of silently depending on the live baseline.
 
 ## Work Guidance
 

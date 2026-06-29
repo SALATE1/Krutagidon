@@ -529,7 +529,12 @@ function replaceStartingCard(
     );
   }
 
-  mustGetDefinition(dataPack, toDefinitionId);
+  if (!dataPack.cardDefinitions.has(toDefinitionId)) {
+    if (isIncompleteFullOnlyDataPack(dataPack)) {
+      return;
+    }
+    mustGetDefinition(dataPack, toDefinitionId);
+  }
 
   const zones = [
     player.hand,
@@ -549,6 +554,10 @@ function replaceStartingCard(
     }
 
     zone.splice(cardIndex, 1, factory.create(toDefinitionId, player.playerId));
+    return;
+  }
+
+  if (isIncompleteFullOnlyDataPack(dataPack)) {
     return;
   }
 

@@ -4,61 +4,8 @@
   "runtimeSchema": "krutagidon.deckComposition.v0",
   "role": "mainDeck",
   "mappingStatus": "incomplete-full-only",
-  "entries": [
-    {
-      "cardId": "esw2_dbg__main_001",
-      "count": 2
-    },
-    {
-      "cardId": "esw2_dbg__main_008",
-      "count": 2
-    },
-    {
-      "cardId": "esw2_dbg__main_009",
-      "count": 2
-    },
-    {
-      "cardId": "esw2_dbg__main_011",
-      "count": 2
-    },
-    {
-      "cardId": "esw2_dbg__main_012",
-      "count": 2
-    },
-    {
-      "cardId": "esw2_dbg__main_014",
-      "count": 2
-    },
-    {
-      "cardId": "esw2_dbg__main_015",
-      "count": 2
-    },
-    {
-      "cardId": "esw2_dbg__main_003",
-      "count": 2
-    },
-    {
-      "cardId": "esw2_dbg__main_020",
-      "count": 2
-    },
-    {
-      "cardId": "esw2_dbg__main_021",
-      "count": 2
-    },
-    {
-      "cardId": "esw2_dbg__main_023",
-      "count": 2
-    },
-    {
-      "cardId": "esw2_dbg__main_030",
-      "count": 1
-    },
-    {
-      "cardId": "esw2_dbg__main_041",
-      "count": 2
-    }
-  ],
+  "entries": [],
   "notes": [
-    "Current runtime deck. Excludes cards without full supported runtime coverage."
+    "Current runtime deck baseline is intentionally empty until new full-runtime card generation lands."
   ]
 }

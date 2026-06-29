@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "packId": "playable-runtime-test-data-pack",
+  "runtimeSchema": "krutagidon.dataPack.v0",
+  "mappingStatus": "supported",
+  "cardDefinitionPaths": [
+    "tests/fixtures/runtime-cards/main",
+    "tests/fixtures/runtime-cards/legend",
+    "tests/fixtures/runtime-cards/starter",
+    "tests/fixtures/runtime-cards/familiar",
+    "data/cards/special"
+  ],
+  "tokenDefinitionPaths": [
+    "data/tokens/dead-wizard",
+    "data/tokens/wizard-property"
+  ],
+  "decks": {
+    "starterDeck": "tests/fixtures/runtime-decks/starter-deck.json",
+    "mainDeck": "tests/fixtures/runtime-decks/main-deck.json",
+    "legendDeck": "tests/fixtures/runtime-decks/legend-deck.json"
+  },
+  "cardStacks": {
+    "wildMagicStack": "data/stacks/cards/wild-magic-stack.json",
+    "limpWandStack": "data/stacks/cards/limp-wand-stack.json"
+  },
+  "tokenStacks": {
+    "deadWizardTokens": "data/stacks/tokens/v0-dead-wizard-token-stack.json",
+    "wizardProperties": "data/stacks/tokens/v0-wizard-property-stack.json"
+  },
+  "pools": {
+    "familiarPool": "tests/fixtures/runtime-pools/familiar-pool.json"
+  }
+}

@@ -12,10 +12,13 @@ import {
 } from "../src/index.js";
 
 const rootDir = process.cwd();
+const playableRuntimeDataPackPath =
+  "tests/fixtures/playable-runtime-data-pack.json";
 
 test("single-game simulation can stop at maxTurns as a non-game termination", () => {
   const result = runSingleGame({
     rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
     seed: 60615,
     maxTurns: 1,
   });
@@ -24,12 +27,15 @@ test("single-game simulation can stop at maxTurns as a non-game termination", ()
   assert.equal(result.isGameEnd, false);
   assert.equal(result.turnsElapsed, 1);
   assert.equal(result.players.length, 2);
-  assert.ok(result.eventLog.some((event) => event.type === "botActionSelected"));
+  assert.ok(
+    result.eventLog.some((event) => event.type === "botActionSelected")
+  );
 });
 
 test("bot action selection records turn number and safe action identity for debug trace", () => {
   const result = runSingleGame({
     rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
     seed: 60615,
     maxTurns: 1,
     bot: {
@@ -39,7 +45,9 @@ test("bot action selection records turn number and safe action identity for debu
     },
   });
 
-  const event = result.eventLog.find((candidate) => candidate.type === "botActionSelected");
+  const event = result.eventLog.find(
+    (candidate) => candidate.type === "botActionSelected"
+  );
   assert.ok(event);
   assert.equal(event.playerId, "player-1");
   assert.equal(event.turnNumber, 1);
@@ -52,7 +60,11 @@ test("bot action selection records turn number and safe action identity for debu
 });
 
 test("game end reason is dead wizard token exhaustion when the DWT stack is empty", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   state.common.deadWizardTokens = {
     status: "available",
     drawStack: [],
@@ -62,7 +74,11 @@ test("game end reason is dead wizard token exhaustion when the DWT stack is empt
 });
 
 test("game end reason does not infer market exhaustion outside Market Flow", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
 
   state.common.market.pop();
   state.common.mainDeck.splice(0);
@@ -78,6 +94,7 @@ test("single-game simulation uses the Market Flow main deck exhaustion reason di
   let prepared = false;
   const result = runSingleGame({
     rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
     seed: 60615,
     maxTurns: 20,
     bot: {
@@ -96,13 +113,17 @@ test("single-game simulation uses the Market Flow main deck exhaustion reason di
   assert.equal(result.endReason, "mainDeckExhausted");
   assert.equal(result.isGameEnd, true);
   assert.equal(result.eventLog.at(-1)?.type, "marketFlowFailed");
-  assert.equal(result.eventLog.some((event) => event.type === "turnStarted"), false);
+  assert.equal(
+    result.eventLog.some((event) => event.type === "turnStarted"),
+    false
+  );
 });
 
 test("single-game simulation uses the Market Flow legend deck exhaustion reason directly", () => {
   let prepared = false;
   const result = runSingleGame({
     rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
     seed: 60615,
     maxTurns: 20,
     bot: {
@@ -121,11 +142,18 @@ test("single-game simulation uses the Market Flow legend deck exhaustion reason 
   assert.equal(result.endReason, "legendDeckExhausted");
   assert.equal(result.isGameEnd, true);
   assert.equal(result.eventLog.at(-1)?.type, "marketFlowFailed");
-  assert.equal(result.eventLog.some((event) => event.type === "turnStarted"), false);
+  assert.equal(
+    result.eventLog.some((event) => event.type === "turnStarted"),
+    false
+  );
 });
 
 test("scoring sums owned cards from scoring zones and applies DWT penalty", () => {
-  const state = initializeGame({ rootDir, seed: 60615 });
+  const state = initializeGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 60615,
+  });
   const player = state.players[0]!;
   const legend = state.common.legendMarket[0]!;
   legend.ownerId = player.playerId;
@@ -138,11 +166,20 @@ test("scoring sums owned cards from scoring zones and applies DWT penalty", () =
   firstDwt.ownerId = player.playerId;
   secondDwt.ownerId = player.playerId;
   player.deadWizardTokens.push(firstDwt, secondDwt);
-  const expectedCardScore = [...player.hand, ...player.deck, ...player.discard, legend].reduce((total, card) => {
-    return total + state.cardDefinitions.get(card.definitionId)!.engine.victoryPoints;
+  const expectedCardScore = [
+    ...player.hand,
+    ...player.deck,
+    ...player.discard,
+    legend,
+  ].reduce((total, card) => {
+    return (
+      total + state.cardDefinitions.get(card.definitionId)!.engine.victoryPoints
+    );
   }, 0);
 
-  const score = scoreGame(state).find((candidate) => candidate.playerId === player.playerId);
+  const score = scoreGame(state).find(
+    (candidate) => candidate.playerId === player.playerId
+  );
 
   assert.ok(score);
   assert.equal(score.legendCount, 1);
@@ -163,14 +200,24 @@ test("scoring applies DWT victory points from token definitions", () => {
   dwt.ownerId = player.playerId;
   player.deadWizardTokens.push(dwt);
 
-  const expectedCardScore = [...player.hand, ...player.deck, ...player.discard].reduce((total, card) => {
-    return total + state.cardDefinitions.get(card.definitionId)!.engine.victoryPoints;
+  const expectedCardScore = [
+    ...player.hand,
+    ...player.deck,
+    ...player.discard,
+  ].reduce((total, card) => {
+    return (
+      total + state.cardDefinitions.get(card.definitionId)!.engine.victoryPoints
+    );
   }, 0);
 
-  const score = scoreGame(state).find((candidate) => candidate.playerId === player.playerId);
+  const score = scoreGame(state).find(
+    (candidate) => candidate.playerId === player.playerId
+  );
 
   assert.ok(score);
-  const fixtureDeadWizardToken = state.tokenDefinitions.get("fixture-dead-wizard-token");
+  const fixtureDeadWizardToken = state.tokenDefinitions.get(
+    "fixture-dead-wizard-token"
+  );
   assert.equal(fixtureDeadWizardToken?.kind, "deadWizardToken");
   assert.equal(fixtureDeadWizardToken.victoryPoints, -5);
   assert.equal(score.victoryPoints, expectedCardScore - 5);
@@ -179,37 +226,87 @@ test("scoring applies DWT victory points from token definitions", () => {
 test("winner determination applies VP, legend count, fewer DWT, then true tie", () => {
   assert.deepEqual(
     determineWinnerIds([
-      { playerId: "player-1", victoryPoints: 8, legendCount: 0, deadWizardTokenCount: 0 },
-      { playerId: "player-2", victoryPoints: 7, legendCount: 10, deadWizardTokenCount: 0 },
+      {
+        playerId: "player-1",
+        victoryPoints: 8,
+        legendCount: 0,
+        deadWizardTokenCount: 0,
+      },
+      {
+        playerId: "player-2",
+        victoryPoints: 7,
+        legendCount: 10,
+        deadWizardTokenCount: 0,
+      },
     ]),
-    ["player-1"],
+    ["player-1"]
   );
   assert.deepEqual(
     determineWinnerIds([
-      { playerId: "player-1", victoryPoints: 8, legendCount: 1, deadWizardTokenCount: 0 },
-      { playerId: "player-2", victoryPoints: 8, legendCount: 2, deadWizardTokenCount: 3 },
+      {
+        playerId: "player-1",
+        victoryPoints: 8,
+        legendCount: 1,
+        deadWizardTokenCount: 0,
+      },
+      {
+        playerId: "player-2",
+        victoryPoints: 8,
+        legendCount: 2,
+        deadWizardTokenCount: 3,
+      },
     ]),
-    ["player-2"],
+    ["player-2"]
   );
   assert.deepEqual(
     determineWinnerIds([
-      { playerId: "player-1", victoryPoints: 8, legendCount: 2, deadWizardTokenCount: 1 },
-      { playerId: "player-2", victoryPoints: 8, legendCount: 2, deadWizardTokenCount: 0 },
+      {
+        playerId: "player-1",
+        victoryPoints: 8,
+        legendCount: 2,
+        deadWizardTokenCount: 1,
+      },
+      {
+        playerId: "player-2",
+        victoryPoints: 8,
+        legendCount: 2,
+        deadWizardTokenCount: 0,
+      },
     ]),
-    ["player-2"],
+    ["player-2"]
   );
   assert.deepEqual(
     determineWinnerIds([
-      { playerId: "player-1", victoryPoints: 8, legendCount: 2, deadWizardTokenCount: 0 },
-      { playerId: "player-2", victoryPoints: 8, legendCount: 2, deadWizardTokenCount: 0 },
+      {
+        playerId: "player-1",
+        victoryPoints: 8,
+        legendCount: 2,
+        deadWizardTokenCount: 0,
+      },
+      {
+        playerId: "player-2",
+        victoryPoints: 8,
+        legendCount: 2,
+        deadWizardTokenCount: 0,
+      },
     ]),
-    ["player-1", "player-2"],
+    ["player-1", "player-2"]
   );
 });
 
 test("single-game run is reproducible for the same seed and baseline bot", () => {
-  const first = runSingleGame({ rootDir, seed: 80809, maxTurns: 8 });
-  const second = runSingleGame({ rootDir, seed: 80809, maxTurns: 8 });
+  const first = runSingleGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 80809,
+    maxTurns: 8,
+  });
+  const second = runSingleGame({
+    rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
+    seed: 80809,
+    maxTurns: 8,
+  });
 
   assert.deepEqual(
     {
@@ -227,19 +324,21 @@ test("single-game run is reproducible for the same seed and baseline bot", () =>
       players: second.players,
       winnerIds: second.winnerIds,
       eventTypes: second.eventLog.map((event) => event.type),
-    },
+    }
   );
 });
 
 test("mass simulation uses reproducible seed sequence and compact summaries", () => {
   const first = runMassSimulation({
     rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
     firstSeed: 9000,
     gameCount: 3,
     maxTurns: 40,
   });
   const second = runMassSimulation({
     rootDir,
+    dataPackPath: playableRuntimeDataPackPath,
     firstSeed: 9000,
     gameCount: 3,
     maxTurns: 40,
@@ -248,11 +347,20 @@ test("mass simulation uses reproducible seed sequence and compact summaries", ()
   assert.deepEqual(first, second);
   assert.deepEqual(
     first.games.map((game) => game.seed),
-    [9000, 9001, 9002],
+    [9000, 9001, 9002]
   );
   assert.equal(first.games.length, 3);
   assert.equal(first.aggregate.totalGames, 3);
-  assert.equal(first.aggregate.tieCount, first.games.filter((game) => game.isTie).length);
-  assert.equal(first.aggregate.tieRate, first.aggregate.tieCount / first.aggregate.totalGames);
-  assert.equal(first.games.some((game) => "eventLog" in game), false);
+  assert.equal(
+    first.aggregate.tieCount,
+    first.games.filter((game) => game.isTie).length
+  );
+  assert.equal(
+    first.aggregate.tieRate,
+    first.aggregate.tieCount / first.aggregate.totalGames
+  );
+  assert.equal(
+    first.games.some((game) => "eventLog" in game),
+    false
+  );
 });
