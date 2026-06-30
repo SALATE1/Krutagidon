@@ -115,6 +115,101 @@ test("card runtime clusters detect decisions that reference non-existent drafts"
   );
 });
 
+test("card runtime clusters require mechanic map headings for used cluster ids", () => {
+  const rootDir = mkdtempSync(
+    path.join(tmpdir(), "krutagidon-card-runtime-clusters-missing-mechanic-")
+  );
+
+  writeCardDraft(rootDir, "main", "esw2_dbg__main_011");
+  writeJson(
+    rootDir,
+    ".scratch/krutagidon-card-runtime-clusters/card-cluster-decisions.json",
+    {
+      schemaVersion: 1,
+      decisions: [
+        {
+          cardId: "esw2_dbg__main_011",
+          status: "clustered",
+          clusterId: "attack-cards",
+        },
+      ],
+    }
+  );
+  writeText(
+    rootDir,
+    ".scratch/krutagidon-card-runtime-clusters/mechanic-clusters.md",
+    "# Mechanic Clusters\n"
+  );
+
+  assert.throws(
+    () => createCardRuntimeClusterReport(rootDir),
+    /Card cluster decisions reference undefined mechanic clusters: attack-cards/
+  );
+});
+
+test("card runtime clusters reject unused mechanic map headings", () => {
+  const rootDir = mkdtempSync(
+    path.join(tmpdir(), "krutagidon-card-runtime-clusters-unused-mechanic-")
+  );
+
+  writeCardDraft(rootDir, "main", "esw2_dbg__main_012");
+  writeJson(
+    rootDir,
+    ".scratch/krutagidon-card-runtime-clusters/card-cluster-decisions.json",
+    {
+      schemaVersion: 1,
+      decisions: [
+        {
+          cardId: "esw2_dbg__main_012",
+          status: "needsClusterDecision",
+        },
+      ],
+    }
+  );
+  writeText(
+    rootDir,
+    ".scratch/krutagidon-card-runtime-clusters/mechanic-clusters.md",
+    "# Mechanic Clusters\n\n## unused-cluster\n\nPrimary mechanic: deferred.\n"
+  );
+
+  assert.throws(
+    () => createCardRuntimeClusterReport(rootDir),
+    /Mechanic cluster map defines unused clusters: unused-cluster/
+  );
+});
+
+test("card runtime clusters reject malformed decision cluster ids", () => {
+  const rootDir = mkdtempSync(
+    path.join(tmpdir(), "krutagidon-card-runtime-clusters-malformed-cluster-")
+  );
+
+  writeCardDraft(rootDir, "main", "esw2_dbg__main_013");
+  writeJson(
+    rootDir,
+    ".scratch/krutagidon-card-runtime-clusters/card-cluster-decisions.json",
+    {
+      schemaVersion: 1,
+      decisions: [
+        {
+          cardId: "esw2_dbg__main_013",
+          status: "clustered",
+          clusterId: "attack cards!",
+        },
+      ],
+    }
+  );
+  writeText(
+    rootDir,
+    ".scratch/krutagidon-card-runtime-clusters/mechanic-clusters.md",
+    "# Mechanic Clusters\n\n## attack cards!\n\nPrimary mechanic: invalid.\n"
+  );
+
+  assert.throws(
+    () => createCardRuntimeClusterReport(rootDir),
+    /Invalid card cluster decision clusterId: esw2_dbg__main_013 \(attack cards!\)/
+  );
+});
+
 test("card runtime clusters matrix combines drafts, runtime, compositions, and manual decisions", () => {
   const rootDir = mkdtempSync(
     path.join(tmpdir(), "krutagidon-card-runtime-clusters-matrix-")
@@ -159,6 +254,11 @@ test("card runtime clusters matrix combines drafts, runtime, compositions, and m
         },
       ],
     }
+  );
+  writeText(
+    rootDir,
+    ".scratch/krutagidon-card-runtime-clusters/mechanic-clusters.md",
+    "# Mechanic Clusters\n\n## attack-cards\n\nPrimary mechanic: attack damage.\n"
   );
   writeText(
     rootDir,

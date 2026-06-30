@@ -1,5 +1,5 @@
-Status: Ready
-Label: ready-for-agent
+Status: Done
+Label: done
 Type: AFK
 
 # Ввести mechanic cluster map и guardrails
@@ -23,19 +23,34 @@ Type: AFK
 
 ## Acceptance criteria
 
-- [ ] Добавлен `mechanic-clusters.md` с минимальным проверяемым форматом: каждый cluster описывается заголовком `## cluster-id`.
-- [ ] Формат явно допускает свободное описание внутри cluster section: primary mechanic, related runtime surfaces, blockers, implementation notes.
-- [ ] Report или отдельная проверка обнаруживает `clusterId` в `card-cluster-decisions.json`, для которого нет `## cluster-id` в `mechanic-clusters.md`.
-- [ ] Report или отдельная проверка обнаруживает `## cluster-id` в `mechanic-clusters.md`, на который не ссылается ни одна карта.
-- [ ] Report или отдельная проверка отклоняет пустой или мусорный `clusterId` в `card-cluster-decisions.json`.
-- [ ] `card-cluster-decisions.json` остаётся источником ответа "какая карта получила какой основной clusterId".
-- [ ] `mechanic-clusters.md` остаётся источником ответа "что означает clusterId и какие рядом mechanics/surfaces/blockers".
-- [ ] Не назначать clusterId всем 128 картам в этом issue.
-- [ ] Не реализовывать новые runtime cards.
-- [ ] Focused tests покрывают новые guardrails.
-- [ ] `npm run report:card-runtime-clusters` проходит на текущем baseline.
-- [ ] `npm run typecheck` проходит.
-- [ ] `git diff --check` проходит.
+- [x] Добавлен `mechanic-clusters.md` с минимальным проверяемым форматом: каждый cluster описывается заголовком `## cluster-id`.
+- [x] Формат явно допускает свободное описание внутри cluster section: primary mechanic, related runtime surfaces, blockers, implementation notes.
+- [x] Report или отдельная проверка обнаруживает `clusterId` в `card-cluster-decisions.json`, для которого нет `## cluster-id` в `mechanic-clusters.md`.
+- [x] Report или отдельная проверка обнаруживает `## cluster-id` в `mechanic-clusters.md`, на который не ссылается ни одна карта.
+- [x] Report или отдельная проверка отклоняет пустой или мусорный `clusterId` в `card-cluster-decisions.json`.
+- [x] `card-cluster-decisions.json` остаётся источником ответа "какая карта получила какой основной clusterId".
+- [x] `mechanic-clusters.md` остаётся источником ответа "что означает clusterId и какие рядом mechanics/surfaces/blockers".
+- [x] Не назначать clusterId всем 128 картам в этом issue.
+- [x] Не реализовывать новые runtime cards.
+- [x] Focused tests покрывают новые guardrails.
+- [x] `npm run report:card-runtime-clusters` проходит на текущем baseline.
+- [x] `npm run typecheck` проходит.
+- [x] `git diff --check` проходит.
+
+## Evidence
+
+- Добавлен `.scratch/krutagidon-card-runtime-clusters/mechanic-clusters.md` как свободный Markdown-файл: проверяются только заголовки `## cluster-id`.
+- `src/import/card-runtime-clusters.ts` теперь связывает `card-cluster-decisions.json` с `mechanic-clusters.md` и блокирует отсутствующие заголовки, неиспользованные заголовки и неверный `clusterId` в decision.
+- `card-cluster-decisions.json` не менялся: в этом issue не назначались `clusterId` всем картам.
+- Runtime cards не реализовывались.
+
+## Checks
+
+- [x] `npm run build -- --pretty false; if ($LASTEXITCODE -eq 0) { node --test dist/tests/card-runtime-clusters.test.js }`
+- [x] `npm run report:card-runtime-clusters`
+- [x] `npm run typecheck`
+- [x] `npm test`
+- [x] `git diff --check`
 
 ## Blocked by
 

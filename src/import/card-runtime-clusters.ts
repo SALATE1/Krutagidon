@@ -82,6 +82,8 @@ interface RuntimeCardRecord {
 
 const decisionFilePath =
   ".scratch/krutagidon-card-runtime-clusters/card-cluster-decisions.json";
+const mechanicClusterMapPath =
+  ".scratch/krutagidon-card-runtime-clusters/mechanic-clusters.md";
 const matrixOutputPath =
   ".scratch/krutagidon-card-runtime-clusters/card-runtime-cluster-matrix.md";
 
@@ -151,6 +153,7 @@ export function createCardRuntimeClusterReport(
   const drafts = collectCardDrafts(rootDir);
   const draftIds = new Set(drafts.map((draft) => draft.cardId));
   const decisions = requireDecisionFile(rootDir, draftIds);
+  validateMechanicClusterMap(rootDir, Array.from(decisions.values()));
   const runtimeCardsById = collectRuntimeCards(rootDir);
   const compositionsById = collectCompositionMembership(rootDir);
   const focusedTestRefsById = collectFocusedTestRefs(rootDir);
@@ -312,6 +315,39 @@ function requireDecisionFile(
   );
 }
 
+function validateMechanicClusterMap(
+  rootDir: string,
+  decisions: CardClusterDecision[]
+): void {
+  const usedClusterIds = new Set(
+    decisions
+      .map((decision) => decision.clusterId)
+      .filter((clusterId): clusterId is string => clusterId !== undefined)
+  );
+  const mechanicClusterIds = readMechanicClusterIds(rootDir);
+  const missingClusterIds = Array.from(usedClusterIds)
+    .filter((clusterId) => !mechanicClusterIds.has(clusterId))
+    .sort();
+  const unusedClusterIds = Array.from(mechanicClusterIds)
+    .filter((clusterId) => !usedClusterIds.has(clusterId))
+    .sort();
+  const errors: string[] = [];
+
+  if (missingClusterIds.length > 0) {
+    errors.push(
+      `Card cluster decisions reference undefined mechanic clusters: ${missingClusterIds.join(", ")}`
+    );
+  }
+  if (unusedClusterIds.length > 0) {
+    errors.push(
+      `Mechanic cluster map defines unused clusters: ${unusedClusterIds.join(", ")}`
+    );
+  }
+  if (errors.length > 0) {
+    throw new Error(errors.join("\n"));
+  }
+}
+
 function validateDecisionFile(
   parsed: CardClusterDecisionFile | undefined,
   draftIds: Set<string>
@@ -341,6 +377,14 @@ function validateDecisionFile(
         `Clustered card decision requires clusterId: ${decision.cardId}`
       );
     }
+    if (
+      decision.clusterId !== undefined &&
+      !isValidClusterId(decision.clusterId)
+    ) {
+      throw new Error(
+        `Invalid card cluster decision clusterId: ${decision.cardId} (${decision.clusterId})`
+      );
+    }
   }
 
   if (unknownCardIds.length > 0) {
@@ -348,6 +392,21 @@ function validateDecisionFile(
       `Card cluster decisions reference non-existent drafts: ${unknownCardIds.sort().join(", ")}`
     );
   }
+}
+
+function readMechanicClusterIds(rootDir: string): Set<string> {
+  const absolutePath = path.resolve(rootDir, mechanicClusterMapPath);
+  if (!safeExists(absolutePath)) {
+    return new Set();
+  }
+
+  const headingPattern = /^##\s+(.+?)\s*$/gm;
+  const text = readFileSync(absolutePath, "utf8");
+  return new Set(
+    Array.from(text.matchAll(headingPattern), (match) => match[1]?.trim())
+      .filter((clusterId): clusterId is string => clusterId !== undefined)
+      .filter((clusterId) => clusterId !== "")
+  );
 }
 
 function readDecisionFile(
@@ -687,6 +746,10 @@ function requireDecisionStatus(value: unknown): CardClusterDecisionStatus {
     return value;
   }
   throw new Error(`Unsupported card cluster decision status: ${String(value)}`);
+}
+
+function isValidClusterId(value: string): boolean {
+  return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
 }
 
 function getCompositionPrefix(filePath: string): "deck" | "stack" | "pool" {
