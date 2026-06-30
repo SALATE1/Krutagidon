@@ -1523,6 +1523,37 @@ test("executable data-pack validation keeps optional setup tolerance out of stri
   );
 });
 
+test("executable data-pack validation rejects partial card mappings in supported packs", () => {
+  const partialCard = createFixtureCard(
+    "fixture-partial-card-in-supported-pack"
+  );
+  const dataPack = withOnlyFixtureCard({
+    ...partialCard,
+    engine: {
+      ...partialCard.engine,
+      mappingStatus: "partial",
+      playableInV0: false,
+    },
+  });
+
+  const result = validateExecutableDataPack({
+    ...dataPack,
+    manifest: {
+      ...dataPack.manifest,
+      mappingStatus: "supported",
+    },
+  });
+
+  assert.equal(result.ok, false);
+  assert.ok(
+    result.errors.some((error) =>
+      error.includes(
+        "fixture-partial-card-in-supported-pack has non-supported mappingStatus partial in supported data pack"
+      )
+    )
+  );
+});
+
 test("executable data-pack validation rejects unsupported play-top destinations", () => {
   const card = createFixtureCard("fixture-unsupported-play-top-destination");
   const dataPack = withFixtureCard({

@@ -240,6 +240,15 @@ export function validateExecutableDataPack(
   errors.push(...validateSetupDataPackCompatibility(dataPack));
 
   for (const definition of dataPack.cardDefinitions.values()) {
+    if (
+      dataPack.manifest.mappingStatus === "supported" &&
+      definition.engine.mappingStatus !== "supported"
+    ) {
+      errors.push(
+        `Card ${definition.cardId} has non-supported mappingStatus ${definition.engine.mappingStatus} in supported data pack`
+      );
+    }
+
     if (!definition.engine.playableInV0) {
       continue;
     }

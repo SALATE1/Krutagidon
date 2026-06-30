@@ -17,6 +17,7 @@ This folder contains TypeScript tests, deterministic fixtures, and test helpers.
 - When behavior changes, test the externally relevant result, not only implementation internals.
 - Use stable IDs in test data and assertions.
 - When `current-runtime` is intentionally incomplete, keep broad behavior suites on explicit test-only runtime packs under `tests/fixtures/` instead of silently depending on the live baseline.
+- Test-only runtime packs that include fixture or partial card definitions must use manifest `mappingStatus: "fixture"`, not `supported`.
 
 ## Work Guidance
 

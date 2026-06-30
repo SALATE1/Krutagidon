@@ -1,6 +1,7 @@
 import {
   isIncompleteFullOnlyDataPack,
   loadCurrentRuntimeDataPack,
+  validateExecutableDataPack,
   type CardDefinition,
   type DeckComposition,
   type LoadedDataPack,
@@ -172,6 +173,14 @@ export function initializeGame(options: InitializeGameOptions): GameState {
     "dataPack" in options
       ? options.dataPack
       : loadCurrentRuntimeDataPack(options.rootDir, options.dataPackPath);
+  if (dataPack.manifest.mappingStatus !== "fixture") {
+    const validation = validateExecutableDataPack(dataPack);
+    if (!validation.ok) {
+      throw new Error(
+        `Cannot initialize game with invalid data pack:\n${validation.errors.join("\n")}`
+      );
+    }
+  }
   const factory = createInstanceFactory();
   const tokenFactory = createTokenInstanceFactory();
 

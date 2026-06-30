@@ -33,6 +33,13 @@ test("initial game setup can use a preloaded data pack", () => {
   assert.deepEqual(snapshot(fromLoadedDataPack), snapshot(fromFilesystem));
 });
 
+test("fixture playable runtime data pack initializes from a preloaded fixture manifest", () => {
+  const dataPack = loadPlayableRuntimeDataPack();
+
+  assert.equal(dataPack.manifest.mappingStatus, "fixture");
+  assert.doesNotThrow(() => initializeGame({ dataPack, seed: 60615 }));
+});
+
 test("current runtime data pack uses current-runtime manifest and composition paths", () => {
   const dataPack = loadCurrentRuntimeDataPack(rootDir);
 
@@ -375,6 +382,32 @@ test("incomplete-full-only initialization tolerates empty starter, main, and leg
   assert.deepEqual(state.common.legendMarket, []);
   assert.deepEqual(state.common.mainDeck, []);
   assert.deepEqual(state.common.legendDeck, []);
+});
+
+test("initial game setup validates preloaded strict data packs", () => {
+  const dataPack = createIncompleteSetupDataPack(
+    loadCurrentRuntimeDataPack(rootDir),
+    {
+      emptyStarterDeck: true,
+      emptyMainDeck: true,
+      emptyLegendDeck: true,
+    }
+  );
+
+  assert.throws(
+    () =>
+      initializeGame({
+        dataPack: {
+          ...dataPack,
+          manifest: {
+            ...dataPack.manifest,
+            mappingStatus: "supported",
+          },
+        },
+        seed: 4545,
+      }),
+    /Cannot initialize game with invalid data pack:[\s\S]*must include starter cards outside incomplete-full-only/
+  );
 });
 
 function snapshot(state: GameState): unknown {

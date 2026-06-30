@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "packId": "playable-runtime-test-data-pack",
   "runtimeSchema": "krutagidon.dataPack.v0",
-  "mappingStatus": "supported",
+  "mappingStatus": "fixture",
   "cardDefinitionPaths": [
     "tests/fixtures/runtime-cards/main",
     "tests/fixtures/runtime-cards/legend",
