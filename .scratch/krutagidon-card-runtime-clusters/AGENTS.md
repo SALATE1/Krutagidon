@@ -9,6 +9,7 @@ This folder contains the local planning workflow for card runtime clusters.
 - Owns `card-cluster-decisions.json` as the manual source of truth for cluster decisions.
 - Owns `mechanic-clusters.md` as the human-readable source of truth for what each final `clusterId` means.
 - Owns `card-runtime-cluster-matrix.md` as generated reporting output.
+- Owns `inventory/` as draft mechanics inventories for Block C planning.
 - Owns issue files and PRD files in this feature folder together with the parent `.scratch/AGENTS.md` workflow.
 
 ## Local Contracts
@@ -37,4 +38,4 @@ This folder contains the local planning workflow for card runtime clusters.
 
 ## Child DOX Index
 
-None.
+- `inventory/AGENTS.md` - draft mechanics inventory files for card batches.

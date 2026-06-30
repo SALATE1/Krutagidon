@@ -1,5 +1,5 @@
-Status: Ready
-Label: ready-for-agent
+Status: Done
+Label: done
 Type: AFK
 
 # Инвентаризировать mechanics batch 01
@@ -50,17 +50,32 @@ Type: AFK
 
 ## Acceptance criteria
 
-- [ ] Создан или обновлён `.scratch/krutagidon-card-runtime-clusters/inventory/01.md`.
-- [ ] Inventory file перечисляет все cardId из этого issue.
-- [ ] Для каждой карты указаны candidate primary mechanics.
-- [ ] Для каждой карты указаны secondary mechanics, если они видны из текста.
-- [ ] Для каждой карты указаны blockers или `none`.
-- [ ] Для каждой карты указано, какие related runtime surfaces стоит проверить позже: wizard properties, Dead Wizard Tokens, special cards, engine gaps или `none/unknown`.
-- [ ] Inventory явно помечает ambiguous/mixed cards, где главную механику нельзя выбрать без дальнейшего решения.
-- [ ] Не редактировать `card-cluster-decisions.json`.
-- [ ] Не редактировать `mechanic-clusters.md`, кроме случаев, когда issue 08 уже задал обязательный inventory reference формат.
-- [ ] Не реализовывать новые runtime cards.
-- [ ] `git diff --check` проходит.
+- [x] Создан или обновлён `.scratch/krutagidon-card-runtime-clusters/inventory/01.md`.
+- [x] Inventory file перечисляет все cardId из этого issue.
+- [x] Для каждой карты указаны candidate primary mechanics.
+- [x] Для каждой карты указаны secondary mechanics, если они видны из текста.
+- [x] Для каждой карты указаны blockers или `none`.
+- [x] Для каждой карты указано, какие related runtime surfaces стоит проверить позже: wizard properties, Dead Wizard Tokens, special cards, engine gaps или `none/unknown`.
+- [x] Inventory явно помечает ambiguous/mixed cards, где главную механику нельзя выбрать без дальнейшего решения.
+- [x] Не редактировать `card-cluster-decisions.json`.
+- [x] Не редактировать `mechanic-clusters.md`, кроме случаев, когда issue 08 уже задал обязательный inventory reference формат.
+- [x] Не реализовывать новые runtime cards.
+- [x] `git diff --check` проходит.
+
+## Evidence
+
+- Добавлен `.scratch/krutagidon-card-runtime-clusters/inventory/01.md` с mechanics inventory для всех 26 cardId из issue.
+- Добавлен `.scratch/krutagidon-card-runtime-clusters/inventory/AGENTS.md`, потому что `inventory/` стал отдельным DOX-owned planning boundary.
+- Родительский `.scratch/krutagidon-card-runtime-clusters/AGENTS.md` обновлён, чтобы индексировать `inventory/`.
+- `card-cluster-decisions.json`, `mechanic-clusters.md` и runtime data не менялись.
+
+## Checks
+
+- [x] PowerShell completeness check: `ids=26`, `missing=none`
+- [x] `git diff --cached --check`
+- [x] `npx lint-staged`
+- [x] `npm run typecheck`
+- [x] `npm test`
 
 ## Blocked by
 
