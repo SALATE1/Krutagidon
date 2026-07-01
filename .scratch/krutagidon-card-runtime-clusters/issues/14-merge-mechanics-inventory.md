@@ -1,4 +1,4 @@
-Status: Ready
+Status: Done
 Label: ready-for-agent
 Type: AFK
 
@@ -23,17 +23,17 @@ Type: AFK
 
 ## Acceptance criteria
 
-- [ ] Прочитаны все inventory files: `inventory/01.md`, `inventory/02.md`, `inventory/03.md`, `inventory/04.md`, `inventory/05.md`.
-- [ ] Создан или обновлён synthesis artifact для Block C merge, например `.scratch/krutagidon-card-runtime-clusters/inventory/merged.md`.
-- [ ] Merge artifact содержит нормализованный список candidate mechanics без очевидных дублей.
-- [ ] Merge artifact фиксирует mechanics, которые встречаются только как secondary и не должны автоматически становиться отдельными clusters.
-- [ ] Merge artifact фиксирует ambiguous/mixed cards, которые требуют отдельного clustering решения.
-- [ ] Merge artifact предлагает явные cardId batches для следующих финальных clustering issues.
-- [ ] Каждый будущий clustering batch формулируется как список конкретных cardId, а не как keyword search по механике.
-- [ ] Merge artifact объясняет правило: финальный `card-cluster-decisions.json` должен иметь ровно один основной `clusterId` на карту.
-- [ ] Не назначать clusterId всем 128 картам в этом issue.
-- [ ] Не реализовывать новые runtime cards.
-- [ ] `git diff --check` проходит.
+- [x] Прочитаны все inventory files: `inventory/01.md`, `inventory/02.md`, `inventory/03.md`, `inventory/04.md`, `inventory/05.md`.
+- [x] Создан или обновлён synthesis artifact для Block C merge, например `.scratch/krutagidon-card-runtime-clusters/inventory/merged.md`.
+- [x] Merge artifact содержит нормализованный список candidate mechanics без очевидных дублей.
+- [x] Merge artifact фиксирует mechanics, которые встречаются только как secondary и не должны автоматически становиться отдельными clusters.
+- [x] Merge artifact фиксирует ambiguous/mixed cards, которые требуют отдельного clustering решения.
+- [x] Merge artifact предлагает явные cardId batches для следующих финальных clustering issues.
+- [x] Каждый будущий clustering batch формулируется как список конкретных cardId, а не как keyword search по механике.
+- [x] Merge artifact объясняет правило: финальный `card-cluster-decisions.json` должен иметь ровно один основной `clusterId` на карту.
+- [x] Не назначать clusterId всем 128 картам в этом issue.
+- [x] Не реализовывать новые runtime cards.
+- [x] `git diff --check` проходит.
 
 ## Blocked by
 
@@ -48,3 +48,4 @@ Type: AFK
 - Не создавать implementation issues в этом slice, если пользователь отдельно не попросил.
 - Следующие issue после merge должны быть финальной кластеризацией explicit cardId batches, а не реализацией runtime cards.
 - Кластер означает группу карт с общей главной механикой. Когда кластер позже берётся в реализацию, выбранные карты должны реализовываться полностью, а не только по главной механике.
+- Evidence: `.scratch/krutagidon-card-runtime-clusters/inventory/merged.md` merges `inventory/01.md` through `inventory/05.md`, keeps the existing issue 15/16 cardId split, and does not edit runtime data or `card-cluster-decisions.json`.
