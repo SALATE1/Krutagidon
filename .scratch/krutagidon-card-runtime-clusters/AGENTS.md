@@ -9,6 +9,7 @@ This folder contains the local planning workflow for card runtime clusters.
 - Owns `card-cluster-decisions.json` as the manual source of truth for cluster decisions.
 - Owns `mechanic-clusters.md` as the human-readable source of truth for what each final `clusterId` means.
 - Owns `card-runtime-cluster-matrix.md` as generated reporting output.
+- Owns `block-d-runtime-implementation.md` as the planning note for Block D runtime implementation rules.
 - Owns `inventory/` as draft mechanics inventories for Block C planning.
 - Owns issue files and PRD files in this feature folder together with the parent `.scratch/AGENTS.md` workflow.
 
@@ -26,6 +27,9 @@ This folder contains the local planning workflow for card runtime clusters.
 - Do not use deleted legacy runtime card JSON as planning input.
 - `fullRuntime` means the card has current runtime card JSON, direct current deck/stack/pool membership, and focused test refs.
 - `missingRuntime` is normal backlog state, not a process error by itself.
+- Block D is runtime implementation work by mechanic cluster. Start with simpler clusters and move toward harder clusters.
+- Do not create broad attack, defense, or other foundation issues ahead of the concrete cluster that needs them by default.
+- Block D implementation issues must make their selected cards `fullRuntime`, including adding them to the corresponding current compositions so they participate in the game.
 - `npm run report:card-runtime-clusters` must block non-full runtime card JSON, runtime card JSON without matching drafts, invalid decision references, and direct composition entries that point at missing runtime card definitions.
 - `npm run report:card-runtime-clusters` must block used `clusterId` values without matching `## cluster-id` headings, unused `## cluster-id` headings, and malformed decision `clusterId` values.
 
